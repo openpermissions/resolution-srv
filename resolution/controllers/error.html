@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Error</h2>
+  {% for error in errors %}
+  <p>{{ error }}</p>
+  {% end %}
+{% end %}

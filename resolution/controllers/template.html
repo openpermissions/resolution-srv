@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block static %}
+<script>
+!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+</script>
+{% end %}
+{% block content %}
+  <div class="row" vocab="http://schema.org/" typeof="ImageObject">
+    {% if hub_key['provider'].get('image_url_template', '') %}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@copyrighthub">
+    <meta name="twitter:creator" content="@SarahMaslinNir">
+    <meta name="twitter:title" content="{{ hub_key['provider']['name'] }}">
+    <meta name="twitter:description" content="{{ hub_key['provider']['description'] }}">
+    <meta name="twitter:image" content="{{ hub_key['provider']['image_url_template'].format(**hub_key) }}">
+    <div class="col-md-6">
+      <img class="img-thumbnail" src="{{ hub_key['provider']['image_url_template'].format(**hub_key) }}" property="contentUrl">
+    </div>
+    {% end %}
+    <div class="col-md-6" property="copyrightHolder" typeof="Organisation">
+      <h2 property="name">{{ hub_key['provider']['name'] }}</h2>
+      {% if hub_key['provider'].get('description', '') %}
+      <p>{{ hub_key['provider']['description'] }}</p>
+      {% end %}
+      <ul style='list-style-image: none; padding-left: 0;'>
+        <li>
+          <strong>{{ hub_key['entity_type'] }}: </strong>
+          <span property="hub_key">{{ hub_key['entity_id'] }}</span>
+        </li>
+        <li>
+          <strong>Address: </strong>
+          <span property="address">{{ hub_key['provider'].get('address', '') }}</span>
+        </li>
+        <li>
+          <strong>Email: </strong>
+          <span property="email">{{ hub_key['provider'].get('email', '') }}</span>
+        </li>
+        <li>
+          <strong>Phone: </strong>
+          <span property="telephone">{{ hub_key['provider'].get('phone', '') }}</span>
+        <li>
+          <strong>Website: </strong>
+          <a href="{{ hub_key['provider'].get('website', '') }}" property="url">{{ hub_key['provider'].get('website', '') }}</a>
+        </li>
+      </ul>
+    </div>
+    <a href="https://twitter.com/share" class="twitter-share-button"{count} data-size="large">Tweet</a>
+  </div>
+{% end %}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>Copyright hub - your gateway to information about copyright in the UK</title>
+    <meta name="description" content="The Copyright Hub points you in the right direction whether you want to learn about copyright, get permission to use somebody else&#39;s work or find out about protecting your work. ">
+    <meta http-equiv="content-style-type" content="text/css">
+    <meta http-equiv="content-script-type" content="text/javascript">
+    <meta name="keywords" content="Copyright, hub, permission, rights, licences, licensing, collecting societies, copyright law">
+    <link href="http://www.copyrighthub.co.uk/favicon.ico" type="image/x-icon" rel="shortcut icon">
+    <link href="http://www.copyrighthub.co.uk/favicon.ico" type="image/x-icon" rel="icon">
+    <link rel="stylesheet" href="https://s3-eu-west-1.amazonaws.com/copyrighthub.org/global.css" type="text/css">
+    {% block static %}{% end %}
+  </head>
+  <body>
+    <div id='header'>
+      <div class='container'>
+        <div id='title' class='current'>
+          <span>
+            <img alt='The Copyright Hub Logo' src='https://s3-eu-west-1.amazonaws.com/copyrighthub.org/logo-the-copyright-hub.svg' />
+          </span>
+        </div>
+      </div>
+      <div class='clear'></div>
+    </div>
+    <div id="section">
+      <div class="container">
+        <div id="content">
+          {% block content %}{% end %}
+        </div>
+      </div>
+    </div>
+    <div id='footer'>
+      <div class='container'>
+        <div id='footer_right'>
+            &#169; Open Permissions Platform Coalition
+        </div>
+      </div>
+      <div class='clear'></div>
+    </div>
+  </body>
+</html>
