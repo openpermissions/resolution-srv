@@ -13,6 +13,7 @@ from urlparse import urlparse
 from bass import hubkey
 from chub import API
 from koi import base, exceptions
+from koi.configure import ssl_server_options
 from tornado import httpclient
 from tornado.gen import coroutine, Return
 from tornado.options import options
@@ -26,7 +27,7 @@ def _get_repository(repository_id):
     :returns: repository resource
     :raises: koi.exceptions.HTTPError
     """
-    client = API(options.url_accounts, ca_certs=options.ssl_ca_cert)
+    client = API(options.url_accounts, ssl_options=ssl_server_options())
 
     try:
         repo = yield client.accounts.repositories[repository_id].get()
@@ -48,7 +49,7 @@ def _get_provider(provider_id):
     :returns: organisation resource
     :raises: koi.exceptions.HTTPError
     """
-    client = API(options.url_accounts, ca_certs=options.ssl_ca_cert)
+    client = API(options.url_accounts, ssl_options=ssl_server_options())
 
     try:
         org = yield client.accounts.organisations[provider_id].get()
