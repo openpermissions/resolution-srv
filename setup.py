@@ -12,9 +12,9 @@ from setuptools import find_packages, setup
 import resolution
 
 setup(
-    name='copyright hub resolution service',
+    name='open permissions platform resolution service',
     version=resolution.__version__,
-    description='Open Permissions Platform Coalition Resolution Service',
+    description='Open Permissions Platform Resolution Service',
     author='CDE Catapult',
     author_email='support-copyrighthub@cde.catapult.org.uk',
     url='https://github.com/openpermissions/resolution-srv',
