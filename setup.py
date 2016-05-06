@@ -16,7 +16,7 @@ setup(
     version=resolution.__version__,
     description='Open Permissions Platform Resolution Service',
     author='CDE Catapult',
-    author_email='support-copyrighthub@cde.catapult.org.uk',
+    author_email='support@openpermissions.org',
     url='https://github.com/openpermissions/resolution-srv',
     packages=find_packages(exclude=['test']),
     entry_points={
