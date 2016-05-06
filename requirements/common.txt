@@ -4,4 +4,4 @@ six==1.9.0
 tornado==4.3
 opp-bass==1.0.9
 opp-chub==1.0.5
-git+https://github.com/openpermissions/koi.git@ssl_options
+opp-koi==1.0.9
