@@ -7,12 +7,6 @@
 {% block content %}
   <div class="row" vocab="http://schema.org/" typeof="ImageObject">
     {% if hub_key['provider'].get('image_url_template', '') %}
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@copyrighthub">
-    <meta name="twitter:creator" content="@SarahMaslinNir">
-    <meta name="twitter:title" content="{{ hub_key['provider']['name'] }}">
-    <meta name="twitter:description" content="{{ hub_key['provider']['description'] }}">
-    <meta name="twitter:image" content="{{ hub_key['provider']['image_url_template'].format(**hub_key) }}">
     <div class="col-md-6">
       <img class="img-thumbnail" src="{{ hub_key['provider']['image_url_template'].format(**hub_key) }}" property="contentUrl">
     </div>
@@ -44,6 +38,5 @@
         </li>
       </ul>
     </div>
-    <a href="https://twitter.com/share" class="twitter-share-button"{count} data-size="large">Tweet</a>
   </div>
 {% end %}
