@@ -60,7 +60,24 @@ def _get_provider(provider_id):
         else:
             msg = 'Unexpected error'
 
-        raise exceptions.HTTPError(exc.code, msg, source='acocunts')
+        raise exceptions.HTTPError(exc.code, msg, source='accounts')
+
+@coroutine
+def _get_ids(repository_id, entity_id):
+    """Get ids from the repository service
+
+    :param provider_id: str
+    :returns: organisation resource
+    :raises: koi.exceptions.HTTPError
+    """
+    client = API(options.url_repository, ca_certs=options.ssl_ca_cert)
+
+    try:
+        res = yield client.repository[repository_id].assets[entity_id].ids.get()
+        raise Return(res)
+    except httpclient.HTTPError as exc:
+        raise exceptions.HTTPError(exc.code, str(exc), source='repository')
+
 
 
 @coroutine
@@ -152,7 +169,25 @@ class HubKeyHandler(base.BaseHandler):
         parsed_key = yield _parse_hub_key(hub_key)
 
         reference_links = parsed_key['provider'].get('reference_links')
-        link_for_id_type = reference_links.get(parsed_key['id_type'])
+        if reference_links:
+            import logging
+            logging.warning("Found reference_links = " + repr(reference_links))
+            if "id_type" in parsed_key:
+                # s0 key
+                link_for_id_type = reference_links.get(parsed_key['id_type'])
+            else:
+                # s1 key
+                ids = yield _get_ids(parsed_key['repository_id'], parsed_key['entity_id'])
+
+                for cid in ids:
+                    link_for_id_type = reference_links.get(cid["source_id_type"])
+                    if link_for_id_type:
+                        break
+
+                #link_for_id_type = reference_links.get(parsed_key['id_type'])
+        else:
+            import logging
+            logging.warning("No reference_links found = " + repr(reference_links))
 
         if reference_links and link_for_id_type:
             redirect = _redirect_url(link_for_id_type, parsed_key)
