@@ -8,7 +8,6 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 """Resolve a Hub Key"""
-import logging
 from urlparse import urlparse
 
 from bass import hubkey
@@ -155,8 +154,6 @@ def resolve_link_id_type(reference_links, parsed_key):
         source_ids = yield _get_ids(parsed_key['repository_id'], parsed_key['entity_id'])
 
     link_for_id_type = None
-    logging.warning("sourced_ids:"+repr(source_ids))
-    logging.warning("redirect_id_type:"+repr(redirect_id_type))
     for cid in source_ids:
         if cid["source_id_type"] == redirect_id_type:
             link_for_id_type = _link_for_id_type.format(source_id=cid["source_id"])
