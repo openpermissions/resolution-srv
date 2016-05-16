@@ -64,6 +64,7 @@ def _get_provider(provider_id):
 
         raise exceptions.HTTPError(exc.code, msg, source='accounts')
 
+
 @coroutine
 def _get_ids(repository_id, entity_id):
     """Get ids from the repository service
@@ -72,16 +73,19 @@ def _get_ids(repository_id, entity_id):
     :returns: organisation resource
     :raises: koi.exceptions.HTTPError
     """
+    repository = yield _get_repository(repository_id)
+    repository_url = repository['data']['service']['location']
+
     token = yield get_token(
         options.url_auth, options.service_id,
         options.client_secret, scope=Read(),
         ssl_options=ssl_server_options()
     )
-    client = API(options.url_repository, token=token, ssl_options=ssl_server_options())
+    client = API(repository_url, token=token, ssl_options=ssl_server_options())
 
     try:
         res = yield client.repository.repositories[repository_id].assets[entity_id].ids.get()
-        raise Return(res["data"])
+        raise Return(res['data'])
     except httpclient.HTTPError as exc:
         raise exceptions.HTTPError(exc.code, str(exc), source='repository')
 
@@ -99,8 +103,8 @@ def _get_repos_for_source_id(source_id_type, source_id):
         ssl_options=ssl_server_options()
     )
     client = API(options.url_index, token=token, ssl_options=ssl_server_options())
-    repos = yield client.index["entity-types"]['asset']["id-types"][source_id_type].ids[source_id].repositories.get()
-    raise Return(repos["data"]["repositories"])
+    repos = yield client.index['entity-types']['asset']['id-types'][source_id_type].ids[source_id].repositories.get()
+    raise Return(repos['data']['repositories'])
 
 @coroutine
 def _parse_hub_key(hub_key):
@@ -131,7 +135,7 @@ def resolve_link_id_type(reference_links, parsed_key):
     if not reference_links:
         raise Return(None)
 
-    redirect_id_type = reference_links.get("redirect_id_type")
+    redirect_id_type = reference_links.get('redirect_id_type')
 
     if not redirect_id_type:
         raise Return(None)
@@ -155,7 +159,7 @@ def resolve_link_id_type(reference_links, parsed_key):
 
     link_for_id_type = None
     for cid in source_ids:
-        if cid["source_id_type"] == redirect_id_type:
+        if cid['source_id_type'] == redirect_id_type:
             link_for_id_type = _link_for_id_type.format(source_id=cid["source_id"])
 
     raise Return(link_for_id_type)
@@ -229,7 +233,7 @@ class HubKeyHandler(base.BaseHandler):
 
             if link_for_id_type:
                 redirect = _redirect_url(link_for_id_type, parsed_key)
-                self.redirect(redirect, True)
+                self.redirect(redirect)
             elif 'application/json' in self.request.headers.get('Accept', '').split(';'):
                 self.write(parsed_key)
             else:
