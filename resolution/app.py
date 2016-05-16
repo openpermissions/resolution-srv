@@ -57,6 +57,7 @@ def main():
         Configure custom syslog server:
             + python resolution --syslog_host=54.77.151.169
     """
+    koi.load_config(CONF_DIR)
     app = make_application()
     server = koi.make_server(app, CONF_DIR)
 
