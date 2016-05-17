@@ -1,4 +1,4 @@
-# The Open Permissions Platform Resolution Workflow
+# Resolution Service Low Level Design
 
 ##Overview
 
@@ -9,6 +9,9 @@ An Open Permissions Platform hub key can be resolved in one of three ways
 2. Render information about the asset and its organisation
 
 The resolution process used is determined by the Reference Links set up for an organisation.
+
+## UML
+![](./images/resolution.png)
 
 ##Reference Links
 Reference Links can be set and retrieved for an Organisation via the [Accounts Service](https://github.com/openpermissions/accounts-srv). 
@@ -43,8 +46,8 @@ If a Redirect Id Type is not provided (or the asset does not have a Source Id Ty
 then the resolution service will **Render**
 
 ### Redirect
-The Redirect Id Type is used to look up the **reference link** to redirect to. 
-The reference link must be a valid url, and allows for optional formatting of the source id within the url structure.
+The Redirect Id Type is used to look up the reference link to redirect to. 
+The reference link must be a valid url, and allows for use of the source id within the url structure.
 Once the reference link has been formatted, the resolution service will redirect to this url.
 
 ###Example
