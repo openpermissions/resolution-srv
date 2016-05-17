@@ -8,6 +8,7 @@
 # See the License for the specific language governing permissions and limitations under the License.
 
 """Resolve a Hub Key"""
+import urllib
 from urlparse import urlparse
 
 from bass import hubkey
@@ -156,7 +157,7 @@ def resolve_link_id_type(reference_links, parsed_key):
     link_for_id_type = None
     for cid in source_ids:
         if cid["source_id_type"] == redirect_id_type:
-            link_for_id_type = _link_for_id_type.format(source_id=cid["source_id"])
+            link_for_id_type = _link_for_id_type.format(source_id=urllib.quote_plus(cid["source_id"]))
 
     raise Return(link_for_id_type)
 
