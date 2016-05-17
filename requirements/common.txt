@@ -3,5 +3,5 @@ requests==2.4.3
 six==1.9.0
 tornado==4.3
 opp-bass==1.0.9
-opp-chub==1.0.5
+opp-chub==1.0.6
 opp-koi==1.0.9
