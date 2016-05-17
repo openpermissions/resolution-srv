@@ -11,9 +11,8 @@
 """Used to start the service from the parent directory using command:
     python resolution runserver
 """
-
-from resolution.app import main
+from resolution.app import main, CONF_DIR
 from koi import commands
 
 if __name__ == '__main__':
-    commands.cli(main)
+    commands.cli(main, conf_dir=CONF_DIR)

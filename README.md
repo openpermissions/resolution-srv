@@ -1,10 +1,17 @@
 The Open Permissions Platform Resolution Service
 ================================================
 
+Useful Links
+============
+* [Open Permissions Platform](http://openpermissions.org)
+* [Low level Design](https://github.com/openpermissions/resolution-srv/blob/master/documents/markdown/low-level-design.md)
+
+Service Overview
+================
 This repository contains a service for resolving Open Permissions Platform Coalition IDs
 
 Running locally
-===============
+---------------
 To run the service locally:
 
 ```
@@ -26,7 +33,7 @@ python resolution/ -t [--test]
 ```
 
 Running tests and generating code coverage
-==========================================
+------------------------------------------
 To have a "clean" target from build artifacts:
 
 ```
