@@ -13,7 +13,7 @@ from mock import patch
 
 from tornado.ioloop import IOLoop
 
-from koi.test_helpers import make_future
+from koi.test_helpers import make_future, gen_test
 from resolution.controllers import hub_key_handler
 
 
@@ -92,3 +92,62 @@ def test_parse_hub_key_s1(_get_provider, _get_repository):
     ("", ""), ])
 def test_parse_url(input, expected):
     assert hub_key_handler.parse_url(input) == expected
+
+
+@gen_test
+def test_resolve_link_id_type_no_ref_link():
+    res = yield hub_key_handler.resolve_link_id_type(None, {})
+    assert res is None
+
+@gen_test
+def test_resolve_link_id_type_empty_ref_link():
+    res = yield hub_key_handler.resolve_link_id_type({}, {})
+    assert res is None
+
+@gen_test
+def test_resolve_link_id_type_empty_ref_no_redirect_info():
+    res = yield hub_key_handler.resolve_link_id_type({'no_redirect_id_type': True}, {})
+    assert res is None
+
+@gen_test
+def test_resolve_link_id_type_empty_ref_no_redirect_info2():
+    res = yield hub_key_handler.resolve_link_id_type({'redirect_id_type': None}, {})
+    assert res is None
+
+
+@gen_test
+def test_resolve_link_id_type_empty_ref_no_links():
+    res = yield hub_key_handler.resolve_link_id_type({'redirect_id_type': 'testidtype'}, {})
+    assert res is None
+
+
+@gen_test
+def test_resolve_link_id_type_empty_ref_no_links2():
+    res = yield hub_key_handler.resolve_link_id_type({'redirect_id_type': 'testidtype',
+                                                      'links': {'otheridtype': 'http://test/'}}, {})
+    assert res is None
+
+
+@patch('resolution.controllers.hub_key_handler._get_ids')
+@patch('resolution.controllers.hub_key_handler._get_repos_for_source_id')
+@gen_test
+def test_resolve_link_id_hk_s0(_get_repos_for_source_id, _get_ids):
+    _get_repos_for_source_id.return_value = make_future([{'repository_id': '043023143124', 'entity_id': '0102343434'}])
+    _get_ids.return_value = make_future([{'source_id_type': 'testidtype', 'source_id': 'this id has spaces and ?'}])
+    res = yield hub_key_handler.resolve_link_id_type({'redirect_id_type': 'testidtype',
+                                                      'links': {'testidtype': 'http://test/{source_id}'}},
+                                                     {'id_type': 'otheridtype', 'entity_id': '321a23'})
+    assert res is not None
+    assert res == 'http://test/this+id+has+spaces+and+%3F'
+
+@patch('resolution.controllers.hub_key_handler._get_ids')
+@gen_test
+def test_resolve_link_id_hk_s1(_get_ids):
+    _get_ids.return_value = make_future([{'source_id_type': 'testidtype', 'source_id': 'this id has spaces and ?'}])
+    res = yield hub_key_handler.resolve_link_id_type({'redirect_id_type': 'testidtype',
+                                                      'links': {'testidtype': 'http://test/{source_id}'}}, {
+                                                            'repository_id': '043023143124',
+                                                            'entity_id': '321a23'
+                                                       })
+    assert res is not None
+    assert res == 'http://test/this+id+has+spaces+and+%3F'
