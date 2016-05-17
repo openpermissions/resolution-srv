@@ -5,7 +5,6 @@ Useful Links
 ============
 * [Open Permissions Platform](http://openpermissions.org)
 * [Low level Design](https://github.com/openpermissions/resolution-srv/blob/master/documents/markdown/low-level-design.md)
-* [Resolution Process](https://github.com/openpermissions/resolution-srv/blob/master/documents/markdown/resolution_process.md)
 
 Service Overview
 ================
