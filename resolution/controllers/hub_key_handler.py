@@ -228,18 +228,19 @@ class HubKeyHandler(base.BaseHandler):
         try:
             hub_key = self.request.full_url()
             parsed_key = yield _parse_hub_key(hub_key)
-
-            reference_links = parsed_key['provider'].get('reference_links')
-            link_for_id_type = yield resolve_link_id_type(reference_links, parsed_key)
-
-            if link_for_id_type:
-                redirect = _redirect_url(link_for_id_type, parsed_key)
-                self.redirect(redirect)
-            elif 'application/json' in self.request.headers.get('Accept', '').split(';'):
-                self.write(parsed_key)
-            else:
-                self.render('template.html', hub_key=parsed_key)
-        except Exception, e:
-            self.set_status(500)
-            self.write(str(type(e))+":"+repr(e))
+        except ValueError:
+            self.set_status(404)
             self.finish()
+            raise Return()
+
+        reference_links = parsed_key['provider'].get('reference_links')
+        link_for_id_type = yield resolve_link_id_type(reference_links, parsed_key)
+
+        if link_for_id_type:
+            redirect = _redirect_url(link_for_id_type, parsed_key)
+            self.redirect(redirect)
+        elif 'application/json' in self.request.headers.get('Accept', '').split(';'):
+            self.write(parsed_key)
+        else:
+            self.render('template.html', hub_key=parsed_key)
+        self.finish()
