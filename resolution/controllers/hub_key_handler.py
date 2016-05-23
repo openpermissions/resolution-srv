@@ -243,4 +243,3 @@ class HubKeyHandler(base.BaseHandler):
             self.write(parsed_key)
         else:
             self.render('template.html', hub_key=parsed_key)
-        self.finish()
