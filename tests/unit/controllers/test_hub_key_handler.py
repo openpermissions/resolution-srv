@@ -128,10 +128,27 @@ def test_resolve_link_id_type_empty_ref_no_links2():
     assert res is None
 
 
+@gen_test
+def test_resolve_link_no_source_id():
+    res = yield hub_key_handler.resolve_link_id_type({'redirect_id_type': 'testidtype',
+                                                      'links': {'testidtype': 'http://example.com'}},
+                                                     {'id_type': 'otheridtype', 'entity_id': '321a23'})
+    assert res == 'http://example.com'
+
+
+@gen_test
+def test_resolve_link_id_in_s0_hk():
+    res = yield hub_key_handler.resolve_link_id_type({'redirect_id_type': 'testidtype',
+                                                      'links': {'testidtype': 'http://test/{source_id}'}},
+                                                     {'id_type': 'testidtype', 'entity_id': '321a23'})
+    assert res is not None
+    assert res == 'http://test/321a23'
+
+
 @patch('resolution.controllers.hub_key_handler._get_ids')
 @patch('resolution.controllers.hub_key_handler._get_repos_for_source_id')
 @gen_test
-def test_resolve_link_id_hk_s0(_get_repos_for_source_id, _get_ids):
+def test_resolve_link_id_not_in_s0_hk(_get_repos_for_source_id, _get_ids):
     _get_repos_for_source_id.return_value = make_future([{'repository_id': '043023143124', 'entity_id': '0102343434'}])
     _get_ids.return_value = make_future([{'source_id_type': 'testidtype', 'source_id': 'this id has spaces and ?'}])
     res = yield hub_key_handler.resolve_link_id_type({'redirect_id_type': 'testidtype',
@@ -140,9 +157,10 @@ def test_resolve_link_id_hk_s0(_get_repos_for_source_id, _get_ids):
     assert res is not None
     assert res == 'http://test/this+id+has+spaces+and+%3F'
 
+
 @patch('resolution.controllers.hub_key_handler._get_ids')
 @gen_test
-def test_resolve_link_id_hk_s1(_get_ids):
+def test_resolve_link_s1_hk(_get_ids):
     _get_ids.return_value = make_future([{'source_id_type': 'testidtype', 'source_id': 'this id has spaces and ?'}])
     res = yield hub_key_handler.resolve_link_id_type({'redirect_id_type': 'testidtype',
                                                       'links': {'testidtype': 'http://test/{source_id}'}}, {

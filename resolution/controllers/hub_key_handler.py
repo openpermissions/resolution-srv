@@ -146,14 +146,20 @@ def resolve_link_id_type(reference_links, parsed_key):
     if not _link_for_id_type:
         raise Return(None)
 
+    if '{source_id}' not in _link_for_id_type:
+        raise Return(_link_for_id_type)
+
     if "id_type" in parsed_key:
         # s0 key
-        repo_ids = yield _get_repos_for_source_id(parsed_key['id_type'], parsed_key['entity_id'])
-        source_ids = []
+        if parsed_key['id_type'] == redirect_id_type:
+            source_ids = [{'source_id_type': parsed_key['id_type'], 'source_id': parsed_key['entity_id']}]
+        else:
+            repo_ids = yield _get_repos_for_source_id(parsed_key['id_type'], parsed_key['entity_id'])
+            source_ids = []
 
-        for repo in repo_ids:
-            partial_source_ids = yield _get_ids(repo['repository_id'], repo['entity_id'])
-            source_ids += partial_source_ids
+            for repo in repo_ids:
+                partial_source_ids = yield _get_ids(repo['repository_id'], repo['entity_id'])
+                source_ids += partial_source_ids
     else:
         # s1 key
         source_ids = yield _get_ids(parsed_key['repository_id'], parsed_key['entity_id'])
