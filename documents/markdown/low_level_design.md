@@ -11,7 +11,14 @@ An Open Permissions Platform hub key can be resolved in one of three ways
 The resolution process used is determined by the Reference Links set up for an organisation.
 
 ## UML
-![](./images/resolution.png)
+Due to the differences in schema between S0 and S1 Hub Keys, organisation information is retrieved slightly differently when resolving S0 Hub Keys
+versus S1 Hub Keys.
+
+###S0 Hub Key Resolution Process
+![](./images/resolution_s0_hubkey.png)
+
+###S1 Hub Key Resolution Process
+![](./images/resolution_s1_hubkey.png)
 
 ##Reference Links
 Reference Links can be set and retrieved for an Organisation via the [Accounts Service](https://github.com/openpermissions/accounts-srv). 
