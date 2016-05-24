@@ -1,19 +1,19 @@
 FORMAT: 1A
 HOST: https://resolution-stage.copyrighthub.org
 
-# Open Permissions Platform Resolution Service
+# Open Permissions Platform - Resolution Service
 
-The resolution service allows to link back a hub key to the organisation that has onboarded this creation on the platform.
+The resolution service resolves a Hub Key (a URL for an entity such as an Asset) to some top level information regarding the entity.
 
 # Resolution of hubkeys
 
 ## Resolution of hub keys s1 [/s1/{hub_id}/{repository_id}/{entity_type}/{entity_id}]
 
 + Parameters
-    + hub_id : `hub01` (string, required) - Hub id of the hub key
-    + repository_id : `02321abcdef` (string, required) - An idea identifying the repository storing the information
-    + entity_type : `asset` (string, required) - The type of the entity referenced by this hub key
-    + entity_id  :  `0101020020233` (string, required) -  An id used to identify the entity in the hub
+    + hub_id : `hub01` (string, required) - Identifies the Hub
+    + repository_id : `02321abcdef` (string, required) -  Identifies the Repository storing the information
+    + entity_type : `asset` (string, required) - The type of the entity referenced by this Hub Key
+    + entity_id  :  `0101020020233` (string, required) -  Identifies the entity
 
 
 ### Ressolve a hub key S1 [GET]
@@ -67,11 +67,11 @@ The resolution service allows to link back a hub key to the organisation that ha
 ## Resolution of hub keys S0 [/s0/{hub_id}/{entity_type}/{organisation_id}/{source_id_type}/{source_id}]
 
 + Parameters
-    + hub_id : `hub01` (string, required) - Hub id of the hub key
+    + hub_id : `hub01` (string, required) - Identifies the Hub
     + entity_type : `asset` (string, required) - Type of entity
-    + organisation_id : `acme` (string, required) - Organisation that has onboarded the asset
+    + organisation_id : `acme` (string, required) - Organisation that has provided the asset
     + source_id_type : `ISBN` (string, required) - Type of the source id provided by the organisation
-    + source_id  :  `0101020020233` (string, required) -  Source id used by organisation to refer to asset
+    + source_id  :  `0101020020233` (string, required) -  The actual source id value
 
 ### Ressolve a hub key S0 [GET]
 
