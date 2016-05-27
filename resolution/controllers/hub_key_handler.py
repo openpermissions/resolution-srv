@@ -146,9 +146,6 @@ def resolve_link_id_type(reference_links, parsed_key):
     if not _link_for_id_type:
         raise Return(None)
 
-    if '{source_id}' not in _link_for_id_type:
-        raise Return(_link_for_id_type)
-
     if "id_type" in parsed_key:
         # s0 key
         if parsed_key['id_type'] == redirect_id_type:
@@ -167,7 +164,10 @@ def resolve_link_id_type(reference_links, parsed_key):
     link_for_id_type = None
     for cid in source_ids:
         if cid["source_id_type"] == redirect_id_type:
-            link_for_id_type = _link_for_id_type.format(source_id=urllib.quote_plus(cid["source_id"]))
+            if '{source_id}' not in _link_for_id_type:
+                link_for_id_type=_link_for_id_type
+            else:
+                link_for_id_type = _link_for_id_type.format(source_id=urllib.quote_plus(cid["source_id"]))
 
     raise Return(link_for_id_type)
 
