@@ -6,9 +6,9 @@
 {% end %}
 {% block content %}
   <div class="row" vocab="http://schema.org/" typeof="ImageObject">
-    {% if hub_key['provider'].get('image_url_template', '') %}
+    {% if hub_key['provider'].get('logo', '') %}
     <div class="col-md-6">
-      <img class="img-thumbnail" src="{{ hub_key['provider']['image_url_template'].format(**hub_key) }}" property="contentUrl">
+      <img class="img-thumbnail" src="{{ hub_key['provider']['logo'].format(**hub_key) }}" property="contentUrl">
     </div>
     {% end %}
     <div class="col-md-6" property="copyrightHolder" typeof="Organisation">
