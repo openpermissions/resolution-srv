@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block static %}
+<script>
+!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+</script>
+{% end %}
+{% block content %}
+  <div class="row" vocab="http://schema.org/" typeof="ImageObject">
+    {% if data.get('logo', '') %}
+    <div class="col-md-6">
+      <img class="img-thumbnail" src="{{ data['logo'].format(**data) }}" property="contentUrl">
+    </div>
+    {% end %}
+    <div class="col-md-6" property="copyrightHolder" typeof="Organisation">
+      <h2 property="name">{{ data['name'] }}</h2>
+      {% if data.get('description', '') %}
+      <p>{{ data['description'] }}</p>
+      {% end %}
+      <ul style='list-style-image: none; padding-left: 0;'>
+        <li>
+          <strong>Address: </strong>
+          <span property="address">{{ data.get('address', '') }}</span>
+        </li>
+        <li>
+          <strong>Email: </strong>
+          <span property="email">{{ data.get('email', '') }}</span>
+        </li>
+        <li>
+          <strong>Phone: </strong>
+          <span property="telephone">{{ data.get('phone', '') }}</span>
+        <li>
+          <strong>Website: </strong>
+          <a href="{{ data.get('website', '') }}" property="url">{{ data.get('website', '') }}</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+{% end %}

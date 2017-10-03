@@ -21,6 +21,7 @@ from tornado.options import options
 
 from chub.oauth2 import Read, get_token
 
+import logging
 
 @coroutine
 def _get_repository(repository_id):
@@ -117,6 +118,7 @@ def _parse_hub_key(hub_key):
     """
     try:
         parsed = hubkey.parse_hub_key(hub_key)
+        logging.debug(parsed)
         if parsed['schema_version'] == 's0':
             provider = yield _get_provider(parsed['organisation_id'])
         else:
@@ -244,8 +246,9 @@ class HubKeyHandler(base.BaseHandler):
 
         if link_for_id_type:
             redirect = _redirect_url(link_for_id_type, parsed_key)
-            self.redirect(redirect)
+            #self.redirect(redirect)
+            self.write('would have redirected to ' + redirect)
         elif 'application/json' in self.request.headers.get('Accept', '').split(';'):
             self.write(parsed_key)
         else:
-            self.render('template.html', hub_key=parsed_key)
+            self.render('asset_template.html', hub_key=parsed_key)

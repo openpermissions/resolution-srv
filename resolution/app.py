@@ -12,20 +12,15 @@ import os.path
 
 import tornado.ioloop
 import tornado.httpserver
-from tornado.options import options, define
-from tornado.web import RedirectHandler
+from tornado.options import options
 import koi
 
-from .controllers import hub_key_handler
+from .controllers import hub_key_handler, redirect_handler
 from . import __version__
 
 # directory containing the config files
 PWD = os.path.dirname(__file__)
 CONF_DIR = os.path.abspath(os.path.join(PWD, '../config'))
-
-define('redirect_to_website',  default='http://www.openpermissions.org/',
-       help='The website to which the resolution service redirects for unknown requests')
-
 
 def make_application():
     """
@@ -34,7 +29,7 @@ def make_application():
     application = tornado.web.Application([
         (r'/s0/.*', hub_key_handler.HubKeyHandler, {'version': __version__}),
         (r'/s1/.*', hub_key_handler.HubKeyHandler, {'version': __version__}),
-        (r'/.*', RedirectHandler, {'url': options.redirect_to_website})
+        (r'/.*', redirect_handler.RedirectHandler, {'version': __version__}),
     ])
     return application
 
