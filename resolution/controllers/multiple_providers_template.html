@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Multiple Providers</h2>
+      <ul style='list-style-image: none; padding-left: 0;'>
+        {% for provider in providers %}
+        <li>
+          <strong>{{ provider['name'] }}: </strong>
+          <a href="/s0/hub1/creation/{{ provider['id'] }}/{{ assetIdType }}/{{ assetId }}">click here to view licensing information</a>
+        </li>
+        {% end %}
+      </ul>
+    </div>
+  </div>
+{% end %}

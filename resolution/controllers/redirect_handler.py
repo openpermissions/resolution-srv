@@ -66,9 +66,32 @@ def _get_provider_by_name(provider):
         if exc.code == 404:
             msg = 'Unknown provider'
         else:
-            msg = 'Unexpected error'
+            msg = 'Unexpected error ' + exc.message
 
         raise exceptions.HTTPError(exc.code, msg, source='accounts')
+
+@coroutine
+def _get_providers_by_type_and_id(source_id_type, source_id):
+    """ get the matching providers for a given source_id_type and source_id
+
+    :param source_id_type: str
+    :param source_id: str        
+    :returns: list of organisations
+    :raises: koi.exceptsion.HTTPError
+    """
+    client = API(options.url_query, ssl_options=ssl_server_options())
+
+    try:
+        res = yield client.query.licensors.get(source_id_type=source_id_type, source_id=source_id)
+        raise Return(res['data'])
+    except httpclient.HTTPError as exc:
+        if exc.code == 404:
+            msg = 'No matching providers found'
+        else:
+            msg = 'Unexpected error ' + exc.message
+
+        raise exceptions.HTTPError(exc.code, msg, source='query')
+
 
 def _getCleanQuerystringParts(cls):
     """
@@ -128,6 +151,8 @@ def _getHostSubDomain(cls):
 
     return subDomain
 
+
+
 class RedirectHandler(base.BaseHandler):
     def initialize(self, **kwargs):
         try:
@@ -169,7 +194,18 @@ class RedirectHandler(base.BaseHandler):
         # if providerId is missing but other two are there then look for multiple providers for asset
         if not providerId and assetIdType and assetId:
             logging.debug("C : lookup asset")
+
             # search for providers by assetId and assetIdType
+            providers = yield _get_providers_by_type_and_id(assetIdType, assetId)
+
+            logging.debug("got " + str(providers))
+
+            if len(providers) == 1:
+                yield self.redirectToAsset(providers[0]['id'], assetIdType, assetId)
+                raise Return()
+            else:
+                self.render('multiple_providers_template.html', providers=providers, assetIdType=assetIdType, assetId=assetId)
+                raise Return()
 
         # look for just providerId specified
         if providerId and not assetIdType and not assetId:
@@ -185,31 +221,34 @@ class RedirectHandler(base.BaseHandler):
         if providerId and assetIdType and assetId:
             logging.debug("B : all specified")
             # look up reference links stuff and redirect
-
-            # build dummy s0 hub_key so we can re-use existing code to de-code
-            dummy_hub_key = "http://copyrighthub.org/s0/hub1/creation/%s/%s/%s" % (providerId, assetIdType, assetId)
-
-            parsed_key = yield _parse_hub_key(dummy_hub_key)
-
-            provider = yield _get_provider(providerId)
-            provider = provider['data']
-
-            reference_links = provider.get('reference_links')
-
-            link_for_id_type = yield resolve_link_id_type(reference_links, parsed_key)
-
-            if link_for_id_type:
-                # replace tokens in reference link with real values
-                redirect = _redirect_url(link_for_id_type, parsed_key)
-
-                # add passed-in querystring values
-                redirect = _mergeQuerystrings(self, redirect)
-
-                self.redirect(redirect)
-            else:
-                self.render('asset_template.html', hub_key=parsed_key)
+            yield self.redirectToAsset(providerId, assetIdType, assetId)
         else:
             # this should never happen so return 404 if it does
             self.set_status(404)
             self.finish()
             raise Return()
+
+    @coroutine
+    def redirectToAsset(self, providerId, assetIdType, assetId):
+        # build dummy s0 hub_key so we can re-use existing code to de-code
+        dummy_hub_key = "http://copyrighthub.org/s0/hub1/creation/%s/%s/%s" % (providerId, assetIdType, assetId)
+
+        parsed_key = yield _parse_hub_key(dummy_hub_key)
+
+        provider = yield _get_provider(providerId)
+        provider = provider['data']
+
+        reference_links = provider.get('reference_links')
+
+        link_for_id_type = yield resolve_link_id_type(reference_links, parsed_key)
+
+        if link_for_id_type:
+            # replace tokens in reference link with real values
+            redirect = _redirect_url(link_for_id_type, parsed_key)
+
+            # add passed-in querystring values
+            redirect = _mergeQuerystrings(self, redirect)
+
+            self.redirect(redirect)
+        else:
+            self.render('asset_template.html', hub_key=parsed_key)
