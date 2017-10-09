@@ -246,8 +246,7 @@ class HubKeyHandler(base.BaseHandler):
 
         if link_for_id_type:
             redirect = _redirect_url(link_for_id_type, parsed_key)
-            #self.redirect(redirect)
-            self.write('would have redirected to ' + redirect)
+            self.redirect(redirect)
         elif 'application/json' in self.request.headers.get('Accept', '').split(';'):
             self.write(parsed_key)
         else:
