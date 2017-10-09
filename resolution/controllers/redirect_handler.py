@@ -201,7 +201,7 @@ class RedirectHandler(base.BaseHandler):
             logging.debug("got " + str(providers))
 
             if len(providers) == 1:
-                yield self.redirectToAsset(providers[0]['id'], assetIdType, assetId)
+                yield self.redirectToAsset(providers[0], assetIdType, assetId)
                 raise Return()
             else:
                 self.render('multiple_providers_template.html', providers=providers, assetIdType=assetIdType, assetId=assetId)
@@ -221,7 +221,8 @@ class RedirectHandler(base.BaseHandler):
         if providerId and assetIdType and assetId:
             logging.debug("B : all specified")
             # look up reference links stuff and redirect
-            yield self.redirectToAsset(providerId, assetIdType, assetId)
+            provider = yield _get_provider_by_name(providerId)
+            yield self.redirectToAsset(provider, assetIdType, assetId)
         else:
             # this should never happen so return 404 if it does
             self.set_status(404)
@@ -229,14 +230,11 @@ class RedirectHandler(base.BaseHandler):
             raise Return()
 
     @coroutine
-    def redirectToAsset(self, providerId, assetIdType, assetId):
+    def redirectToAsset(self, provider, assetIdType, assetId):
         # build dummy s0 hub_key so we can re-use existing code to de-code
-        dummy_hub_key = "http://copyrighthub.org/s0/hub1/creation/%s/%s/%s" % (providerId, assetIdType, assetId)
+        dummy_hub_key = "http://copyrighthub.org/s0/hub1/creation/%s/%s/%s" % (provider['id'], assetIdType, assetId)
 
         parsed_key = yield _parse_hub_key(dummy_hub_key)
-
-        provider = yield _get_provider(providerId)
-        provider = provider['data']
 
         reference_links = provider.get('reference_links')
 
