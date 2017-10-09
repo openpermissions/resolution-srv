@@ -13,7 +13,7 @@ import logging
 import urllib
 
 from urllib import urlencode
-from urlparse import urlparse, parse_qs
+from urlparse import urlparse, parse_qs, urlunparse
 
 from chub import API
 from koi import base, exceptions
@@ -70,9 +70,11 @@ def _get_provider_by_name(provider):
 
         raise exceptions.HTTPError(exc.code, msg, source='accounts')
 
-def _getCleanQuerystring(cls):
+def _getCleanQuerystringParts(cls):
     """
     strip our internal parameters from the querystring and return all others
+
+    returns a dict
     """
     cleanQs = {}
 
@@ -83,7 +85,22 @@ def _getCleanQuerystring(cls):
         if x not in ['hubpid', 'hubidt', 'hubaid']:
             cleanQs[x] = parts[x]
 
-    return urlencode(cleanQs, True)
+    return cleanQs
+
+def _mergeQuerystrings(cls, linkUrl):
+    """
+    takes the linkUrl and adds in any querystring params in the request Url
+
+    returns url string
+    """
+    url_parts = list(urlparse(linkUrl))
+    linkQs = parse_qs(url_parts[4])
+
+    linkQs.update(_getCleanQuerystringParts(cls))
+
+    url_parts[4] = urlencode(linkQs, True)
+
+    return urlunparse(url_parts)
 
 def _getHostSubDomain(cls):
     """
@@ -102,13 +119,8 @@ def _getHostSubDomain(cls):
 
     host, port = httputil.split_host_and_port(host)
 
-    logging.debug("host " + host)
-
     # get the subdomain part
     hostparts = host.split('.')
-
-    logging.debug("hostparts " + ', '.join(hostparts))
-    logging.debug("len " + str(len(hostparts)))
 
     if len(hostparts) == 3:
         if hostparts[1] == 'copyrighthub' and hostparts[2] == 'org':
@@ -137,11 +149,7 @@ class RedirectHandler(base.BaseHandler):
 
         # get the subdomain from the request
         hostProvider = _getHostSubDomain(self)
-        cleanQuery = _getCleanQuerystring(self)
-
-        logging.debug("sub " + hostProvider)
-        logging.debug("qs " + cleanQuery)
-
+        
         # if hostname provider is specified then use it, but check it doesn't
         # conflict with any provider passed in the queryString
         if hostProvider:
@@ -169,8 +177,6 @@ class RedirectHandler(base.BaseHandler):
             # get provider info
             provider = yield _get_provider_by_name(providerId)
 
-            logging.debug(provider)
-
             # show the provider's special branded landing page
             self.render('provider_template.html', data=provider)
             raise Return()
@@ -183,28 +189,22 @@ class RedirectHandler(base.BaseHandler):
             # build dummy s0 hub_key so we can re-use existing code to de-code
             dummy_hub_key = "http://copyrighthub.org/s0/hub1/creation/%s/%s/%s" % (providerId, assetIdType, assetId)
 
-            logging.debug("dummy " + dummy_hub_key)
-
             parsed_key = yield _parse_hub_key(dummy_hub_key)
 
-            logging.debug("parsed " + str(parsed_key))
-            
             provider = yield _get_provider(providerId)
             provider = provider['data']
 
-            logging.debug("provider " + str(provider))
-
             reference_links = provider.get('reference_links')
-
-            logging.debug("reference links " + str(reference_links))
 
             link_for_id_type = yield resolve_link_id_type(reference_links, parsed_key)
 
-            logging.debug("link_for_id_type " + link_for_id_type)
-
             if link_for_id_type:
+                # replace tokens in reference link with real values
                 redirect = _redirect_url(link_for_id_type, parsed_key)
-                logging.debug("redirected to " + redirect)
+
+                # add passed-in querystring values
+                redirect = _mergeQuerystrings(self, redirect)
+
                 self.redirect(redirect)
             else:
                 self.render('asset_template.html', hub_key=parsed_key)
