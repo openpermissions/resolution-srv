@@ -133,20 +133,18 @@ def _getHostSubDomain(cls):
     """
     subDomain = ""
 
-    # we need to check the original header from the load balancer
-    elbHostname = cls.request.headers.get('X-Forwarded-For')
-    if not elbHostname:
-        host = cls.request.host.lower()
-    else:
-        host = elbHostname.lower()
+    host = cls.request.headers.get('Host')
 
     host, port = httputil.split_host_and_port(host)
 
     # get the subdomain part
     hostparts = host.split('.')
 
+    # match subdomain, but only if not in list of ignore_subdomains
     if len(hostparts) == 3:
-        if hostparts[1] == 'copyrighthub' and hostparts[2] == 'org':
+        if not hostparts[0] in options.ignored_subdomains   \
+                and hostparts[1] == 'copyrighthub'          \
+                and hostparts[2] == 'org':
             subDomain = hostparts[0]
 
     return subDomain
@@ -197,8 +195,6 @@ class RedirectHandler(base.BaseHandler):
 
             # search for providers by assetId and assetIdType
             providers = yield _get_providers_by_type_and_id(assetIdType, assetId)
-
-            logging.debug("got " + str(providers))
 
             if len(providers) == 1:
                 yield self.redirectToAsset(providers[0], assetIdType, assetId)
