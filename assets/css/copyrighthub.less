@@ -1,0 +1,109 @@
+
+@mobile:      ~"only screen and (max-width: 568px)";
+@mobile-small:      ~"only screen and (max-width: 480px)";
+@mobile-portrait:      ~"only screen and (max-width: 320px)";
+
+@tablet:      ~"only screen and (min-width: 600px) and (max-width: 949px)";
+@tablet-landscape:      ~"only screen and (max-width: 1024px)";
+
+@desktop:     ~"only screen and (min-width: 950px) and (max-width: 1128px)";
+@desktop-xl:  ~"only screen and (min-width: 1129px)";
+
+@white: #ffffff;
+@blue-dark: #2c3e50;
+@blue-light: #2980b9;
+
+@grey: #e3e3e3;
+
+
+@body-background: #E9EBEE;
+
+
+.box-shadow {
+	-webkit-box-shadow: 2px 2px 8px 0px rgba(50, 50, 50, 0.75);
+    -moz-box-shadow:    2px 2px 8px 0px rgba(50, 50, 50, 0.75);
+    box-shadow:         2px 2px 8px 0px rgba(50, 50, 50, 0.75);
+}
+
+// ===========================================================================================================
+
+body {
+  //padding-top: 50px;
+  background: @body-background;
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 14px;
+  color: #333;
+
+  @media @mobile {
+    padding-top: 10px;
+  }
+}
+
+
+.push {
+	margin-bottom: 60px;
+}
+.logo {
+	padding: 10px 10px 20px 10px;
+    img {
+    	max-width: 250px;
+    }
+
+    @media @mobile {
+      margin: 0 auto;
+      display: table;
+      margin-right: auto !important;
+    }
+}
+.box {
+	padding: 10px 40px 30px 40px;
+
+    .stars {
+      font-size: 24px;
+    }
+    
+    .details-box {
+      padding: 10px 15px 0px 15px;
+      background: @white;
+      border-radius: 0px;
+      border-right: 1px solid @grey;
+      border-left: 1px solid @grey;
+      border-bottom: 1px solid @grey;
+      margin-bottom: 15px;
+
+      @media @mobile, @tablet {
+        padding: 10px 10px 0px 10px;
+      }
+    }
+  
+    .powered-by {
+      img {
+      width: 100px;
+      }
+    }
+    
+
+    @media @mobile, @tablet {
+        padding: 15px 20px 10px 20px;
+      }
+}
+
+
+//============== index2html ============
+
+.navbar {
+  border-radius: 0px;
+}
+.navbar-brand {
+  font-size: 14px;
+  img {
+  width: 100px;
+}
+}
+
+.index2 {
+  background: @white;
+}
+
+
+

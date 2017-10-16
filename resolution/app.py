@@ -29,6 +29,7 @@ def make_application():
     application = tornado.web.Application([
         (r'/s0/.*', hub_key_handler.HubKeyHandler, {'version': __version__}),
         (r'/s1/.*', hub_key_handler.HubKeyHandler, {'version': __version__}),
+        (r'/assets/(.*)', tornado.web.StaticFileHandler, {'path': os.path.abspath(os.path.join(PWD, '../assets'))}),
         (r'/.*', redirect_handler.RedirectHandler, {'version': __version__}),
     ])
     return application
