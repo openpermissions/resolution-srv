@@ -224,9 +224,8 @@ class RedirectHandler(base.BaseHandler):
             provider = yield _get_provider_by_name(providerId)
             yield self.redirectToAsset(provider, assetIdType, assetId)
         else:
-            # this should never happen so return 404 if it does
-            self.set_status(404)
-            self.finish()
+            # this should never happen so return error if it does
+            self.render('error.html', errors=['unable to find matching asset from provided identifiers'])
             raise Return()
 
     @coroutine
