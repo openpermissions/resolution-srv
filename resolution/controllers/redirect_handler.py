@@ -23,7 +23,7 @@ from tornado.gen import coroutine, Return
 from tornado.options import options, define
 from tornado.web import RedirectHandler
 
-from hub_key_handler import _parse_hub_key, resolve_link_id_type, _redirect_url
+from hub_key_handler import _parse_hub_key, resolve_link_id_type, _redirect_url, _get_repos_for_source_id
 
 define('redirect_to_website', default='http://openpermissions.org/',
        help='The website to which the resolution service redirects for unknown requests')
@@ -92,6 +92,22 @@ def _get_providers_by_type_and_id(source_id_type, source_id):
 
         raise exceptions.HTTPError(exc.code, msg, source='query')
 
+@coroutine
+def _get_asset_details(hubkey):
+    """ get the asset details from a hubkey
+    """
+    client = API(options.url_query, ssl_options=ssl_server_options())
+
+    try:
+        res = yield client.query.entities.get(hub_key=hubkey)
+        raise Return(res['data'])
+    except httpclient.HTTPError as exc:
+        if exc.code == 404:
+            msg = 'No matching asset found'
+        else:
+            msg = 'Unexpected error ' + exc.message
+
+        raise exceptions.HTTPError(exc.code, msg, source='query')
 
 def _getCleanQuerystringParts(cls):
     """
@@ -226,8 +242,13 @@ class RedirectHandler(base.BaseHandler):
 
     @coroutine
     def redirectToAsset(self, provider, assetIdType, assetId):
-        # build dummy s0 hub_key so we can re-use existing code to de-code
-        dummy_hub_key = "http://copyrighthub.org/s0/hub1/creation/%s/%s/%s" % (provider['id'], assetIdType, assetId)
+        # build dummy hub_key so we can re-use existing code to de-code
+        repo_ids = yield _get_repos_for_source_id(assetIdType, assetId)
+        repository_id = repo_ids[0]['repository_id']
+        entity_id = repo_ids[0]['entity_id']
+        dummy_hub_key = "http://copyrighthub.org/s1/hub1/%s/asset/%s" % (repository_id, entity_id)
+
+        logging.debug(dummy_hub_key)
 
         parsed_key = yield _parse_hub_key(dummy_hub_key)
 
@@ -244,4 +265,14 @@ class RedirectHandler(base.BaseHandler):
 
             self.redirect(redirect)
         else:
-            self.render('asset_template.html', hub_key=parsed_key)
+            details = yield _get_asset_details(dummy_hub_key)
+
+            for item in details['@graph']:
+                if item['@type'] == "op:Id":
+                    assetType = item['op:id_type']['@id']
+                    assetId = item['op:value']['@value']
+                elif item['@type'] == "op:Asset":
+                    description = item['dcterm:description']['@value']
+                    lastModified = item['dcterm:modified']['@value']
+
+            self.render('asset_template.html', hub_key=parsed_key, assetType=assetType, assetId=assetId, description=description, lastModified=lastModified)
