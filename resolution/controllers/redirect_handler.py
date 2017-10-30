@@ -243,7 +243,7 @@ class RedirectHandler(base.BaseHandler):
     @coroutine
     def redirectToAsset(self, provider, assetIdType, assetId):
         # build dummy hub_key so we can re-use existing code to de-code
-        repo_ids = yield _get_repos_for_source_id(assetIdType, assetId)
+        repo_ids = yield _get_repos_for_source_id(assetIdType.lower(), assetId)
         repository_id = repo_ids[0]['repository_id']
         entity_id = repo_ids[0]['entity_id']
         dummy_hub_key = "http://copyrighthub.org/s1/hub1/%s/asset/%s" % (repository_id, entity_id)
@@ -275,4 +275,4 @@ class RedirectHandler(base.BaseHandler):
                     description = item['dcterm:description']['@value']
                     lastModified = item['dcterm:modified']['@value']
 
-            self.render('asset_template.html', hub_key=parsed_key, assetType=assetType, assetId=assetId, description=description, lastModified=lastModified)
+            self.render('asset_template.html', data=provider, assetType=assetType, assetId=assetId, description=description, lastModified=lastModified)
