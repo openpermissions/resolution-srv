@@ -1,1 +1,5 @@
 config/local.conf
+*.pyc
+.vscode/*
+open_permissions_platform_resolution_service.egg-info/*
+app.log
