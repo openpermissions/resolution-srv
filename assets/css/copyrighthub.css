@@ -22,6 +22,7 @@ body {
 }
 .logo img {
   max-width: 250px;
+  max-height: 150px;
 }
 @media only screen and (max-width: 568px) {
   .logo {
@@ -58,15 +59,62 @@ body {
     padding: 15px 20px 10px 20px;
   }
 }
-.navbar {
-  border-radius: 0px;
+.disam-page {
+  background: #e3e3e3;
 }
-.navbar-brand {
-  font-size: 14px;
+.disam-logo img {
+  margin-top: 60px;
+  max-width: 250px;
 }
-.navbar-brand img {
-  width: 100px;
+h1 {
+  color: #434350;
+  margin-top: 30px;
+  margin-bottom: 30px;
+  font-size: 24px;
+  font-weight: bold;
 }
-.index2 {
+.disam-box {
+  padding: 10px 15px 0px 15px;
   background: #ffffff;
+  border-radius: 0px;
+  border-top: 4px solid #f1ac40;
+  border-right: 1px solid #e3e3e3;
+  border-left: 1px solid #e3e3e3;
+  border-bottom: 1px solid #e3e3e3;
+  margin-bottom: 15px;
+}
+.error-page {
+  background: #e3e3e3;
+}
+.error-box {
+  margin-top: 100px;
+}
+.error-box .error-logo img {
+  max-width: 150px;
+}
+.error-box h1 {
+  font-size: 200px;
+  text-shadow: 0px 1px 1px #1c2f2c;
+  color: #379d92;
+  -webkit-background-clip: text;
+  -moz-background-clip: text;
+  background-clip: text;
+}
+.error-box h3 {
+  color: #434350;
+  margin-bottom: 30px;
+  font-size: 46px;
+  font-weight: bold;
+}
+.error-box h4 {
+  font-size: 18px;
+  color: #434350;
+}
+.error-box .btn-default {
+  cursor: pointer;
+  border: none;
+  border-radius: 0px;
+  margin: 5px;
+  background: transparent;
+  color: #379d92;
 }
