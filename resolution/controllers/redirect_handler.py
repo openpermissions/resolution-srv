@@ -28,7 +28,6 @@ from hub_key_handler import _parse_hub_key, resolve_link_id_type, _redirect_url,
 define('redirect_to_website', default='http://openpermissions.org/',
        help='The website to which the resolution service redirects for unknown requests')
 
-
 @coroutine
 def _get_provider(provider_id):
     """Get a provider from the accounts service
@@ -301,11 +300,11 @@ class RedirectHandler(base.BaseHandler):
 
             # get offers
             offers = yield _get_offers_by_type_and_id(assetIdType, assetId)
-            logging.debug('got offers : ' + str(offers[0]))
 
             offer_details = []
 
             if offers:
+                logging.debug('got offers : ' + str(offers[0]))
                 for offer in offers[0]['offers']:
                     # find the actual offer details inside the @graph node
                     for snippet in offer['@graph']:
