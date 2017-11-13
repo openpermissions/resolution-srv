@@ -83,10 +83,12 @@
             <div class="details-box card">
               <h4 class="secondary-colour">Identifiers</h4>
               <table class="table">
+                {% for asset in assets %}
                 <tr>
-                  <td>{{ assetType }}</td>
-                  <td>{{ assetId }}</td>
+                  <td>{{ asset['idType'] }}</td>
+                  <td>{{ asset['id'] }}</td>
                 </tr>
+                {% end %}
               </table>
             </div>
           </div>

@@ -291,12 +291,20 @@ class RedirectHandler(base.BaseHandler):
             details = yield _get_asset_details(dummy_hub_key)
             logging.debug('got details : ' + str(details))
 
-            for item in details['@graph']:
-                if item['@type'] == "op:Id":
-                    assetType = item['op:id_type']['@id']
-                    assetId = item['op:value']['@value']
-                elif item['@type'] == "op:Asset":
-                    description = item['dcterm:description']['@value']
+            asset_details = []
+            asset_description = ''
+
+            if details.get('@graph', '') != '':
+                for item in details['@graph']:
+                    if item.get('@type', '') == "op:Id":
+                        asset_detail = {
+                            'id': item['op:value']['@value'],
+                            'idType': item['op:id_type']['@id'][4:]
+                        }
+                        logging.debug('asset detail ' + str(asset_detail))
+                        asset_details.append(asset_detail)
+                    elif item.get('@type', '') == "op:Asset":
+                        asset_description = item['dcterm:description']['@value']
 
             # get offers
             offers = yield _get_offers_by_type_and_id(assetIdType, assetId)
@@ -320,5 +328,5 @@ class RedirectHandler(base.BaseHandler):
 
                             offer_details.append(offer_detail)
 
-            self.render('asset_template.html', data=provider, assetType=assetType, 
-                            assetId=assetId, description=description, offers=offer_details)
+            self.render('asset_template.html', data=provider, assets=asset_details, 
+                            description=asset_description, offers=offer_details)
