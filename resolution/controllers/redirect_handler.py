@@ -28,6 +28,7 @@ from hub_key_handler import _parse_hub_key, resolve_link_id_type, _redirect_url,
 define('redirect_to_website', default='http://openpermissions.org/',
        help='The website to which the resolution service redirects for unknown requests')
 
+
 @coroutine
 def _get_provider(provider_id):
     """Get a provider from the accounts service
@@ -278,10 +279,6 @@ class RedirectHandler(base.BaseHandler):
 
         link_for_id_type = yield resolve_link_id_type(reference_links, parsed_key)
 
-        # get offers
-        offers = yield _get_offers_by_type_and_id(assetIdType, assetId)
-        logging.debug('got offers : ' + str(offers))
-
         if link_for_id_type:
             # replace tokens in reference link with real values
             redirect = _redirect_url(link_for_id_type, parsed_key)
@@ -291,7 +288,9 @@ class RedirectHandler(base.BaseHandler):
 
             self.redirect(redirect)
         else:
+            # get asset details
             details = yield _get_asset_details(dummy_hub_key)
+            logging.debug('got details : ' + str(details))
 
             for item in details['@graph']:
                 if item['@type'] == "op:Id":
@@ -299,6 +298,28 @@ class RedirectHandler(base.BaseHandler):
                     assetId = item['op:value']['@value']
                 elif item['@type'] == "op:Asset":
                     description = item['dcterm:description']['@value']
-                    lastModified = item['dcterm:modified']['@value']
 
-            self.render('asset_template.html', data=provider, assetType=assetType, assetId=assetId, description=description, lastModified=lastModified)
+            # get offers
+            offers = yield _get_offers_by_type_and_id(assetIdType, assetId)
+            logging.debug('got offers : ' + str(offers[0]))
+
+            offer_details = []
+
+            if offers:
+                for offer in offers[0]['offers']:
+                    # find the actual offer details inside the @graph node
+                    for snippet in offer['@graph']:
+                        logging.debug('snip ' + str(snippet))
+                        if snippet.get('type', '') == 'offer':
+                            offer_detail = {
+                                'title': snippet['dcterm:title'],
+                                'description': snippet['op:policyDescription'],
+                                'id': snippet['@id'][3:]
+                            }
+                            
+                            logging.debug('offer details : ' + str(offer_detail))
+
+                            offer_details.append(offer_detail)
+
+            self.render('asset_template.html', data=provider, assetType=assetType, 
+                            assetId=assetId, description=description, offers=offer_details)

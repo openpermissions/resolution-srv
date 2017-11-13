@@ -37,6 +37,16 @@
       color: #84194b;
       {% end %}
     }
+
+    .btn-default {
+        border-radius: 0px;
+        background: transparent;
+        {% if data.get('primary_color', '') %} 
+        border: 1px solid {{ data['primary_color'] }};
+        {% else %}
+        border: 1px solid #9f202d;
+        {% end %}
+      }
   </style>
 </head>
 
@@ -47,7 +57,6 @@
 
       <div class="col-md-12 ml-auto mr-auto">
 
-
         <div class="box">
           {% if data.get('logo', '') %}
           <div class="row">
@@ -55,68 +64,116 @@
               <img src="{{ data['logo'].format(**data) }}" alt="">
             </div>
           </div>
+          <hr>
           {% end %}
           <div class="row">
-            <div class="col-md-6">
+            <div class="container">
+              <h4 class="secondary-colour">Asset Information</h4>
+             
+            </div>
+          </div>
+          
+          <div class="card-deck">
+              
+            <div class="details-box card">
+              <h4 class="secondary-colour">Description</h4>
+              <p>{{ description }}</p>
+            </div>
+         
+            <div class="details-box card">
+              <h4 class="secondary-colour">Identifiers</h4>
+              <table class="table">
+                <tr>
+                  <td>{{ assetType }}</td>
+                  <td>{{ assetId }}</td>
+                </tr>
+              </table>
+            </div>
+          </div>
 
-              <div class="details-box">
+          
+          <hr>
+          <div class="row">
+            <div class="col-md-12">
+              <h4 class="secondary-colour">Licenses</h4>
+               <div class="details-box">
+                  <table class="table table-bordered table-striped table-responsive">
+                    <thead>
+                      <tr>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    {% for offer in offers %}
+                    <tr>
+                      <td>{{ offer['title'] }}</td>
+                      <td>{{ offer['description'] }}</td>
+                      <td><a href="#{{ offer['id'] }}"><button class="btn btn-default">Get license</button></a></td>
+                    </tr>
+                    {% end %}
+                </table>
+                </div>
+              </div>
+            </div>
+          <hr>
+          <div class="row">
+            <div class="container">
+              <h4 class="secondary-colour">About</h4>
+            </div>
+          </div>
+          <div class="card-deck">
+              <div class="details-box card">
                 <h2 class="secondary-colour">{{ data['name'] }}</h2>
-                <p class="secondary-colour stars"><i class="fa fa-star{% if data.get('star_rating', 0) < 1%}-o{% end %}"></i><i class="fa fa-star{% if data.get('star_rating', 0) < 2%}-o{% end %}"></i><i class="fa fa-star{% if data.get('star_rating', 0) < 3%}-o{% end %}"></i><i class="fa fa-star{% if data.get('star_rating', 0) < 4%}-o{% end %}"></i><i class="fa fa-star{% if data.get('star_rating', 0) < 5%}-o{% end %}"></i>
-                </p>
-
+                <p class="secondary-colour stars"><i class="fa fa-star{% if data.get('star_rating', 0) < 1%}-o{% end %}"></i><i class="fa fa-star{% if data.get('star_rating', 0) < 2%}-o{% end %}"></i><i class="fa fa-star{% if data.get('star_rating', 0) < 3%}-o{% end %}"></i><i class="fa fa-star{% if data.get('star_rating', 0) < 4%}-o{% end %}"></i><i class="fa fa-star{% if data.get('star_rating', 0) < 5%}-o{% end %}"></i></p>              
               </div>
               
               {% if data.get('phone', '') %}
-              <div class="details-box">
+              <div class="details-box card">
                 <h4 class="secondary-colour">Phone</h4>
                 <p>{{ data['phone'] }}</p>
               </div>
               {% end %}
-              
+            </div>
+
+             <div class="card-deck">
+
               {% if data.get('email', '') %}
-              <div class="details-box">
+              <div class="details-box card">
                 <h4 class="secondary-colour">Email</h4>
                 <p>{{ data['email'] }}</p>
               </div>
               {% end %}
 
               {% if data.get('website', '') %}
-              <div class="details-box">
+              <div class="details-box card">
                 <h4 class="secondary-colour">Website</h4>
                 <p>{{ data['website'] }}</p>
               </div>
               {% end %}
-
             </div>
-
-            <div class="col-md-6">
-
-              <div class="details-box">
-                <h4 class="secondary-colour">Asset Details</h4>
-                <p>Type: {{ assetType }}</p>
-                <p>ID: {{ assetId }}</p>
-                <p>Desc: {{ description }}</p>
-                <p>Date: {{ lastModified }}</p>
-              </div>
-
+           
+            <div class="card-deck">
               {% if data.get('address', '') %}
-              <div class="details-box">
+              <div class="details-box card">
                 <h4 class="secondary-colour">Address</h4>
                 <p>{{ data['address'] }}</p>
               </div>
               {% end %}
+            </div>
 
-              {% if data.get('description', '') %}
-              <div class="details-box">
+            {% if data.get('description', '') %}
+            <div class="card-deck">
+              <div class="details-box card">
                 <h4 class="secondary-colour">Description</h4>
                 <p>{{ data['description'] }}</p>
               </div>
-              {% end %}
-            </div>
-          </div>
-          <div class="powered-by pull-right">Powered by <a href="http://www.copyrighthub.org/" target="blank"><img src="/assets/images/copyrightlogo.png"></a></div>
-        </div>
 
+            </div>
+            {% end %}
+            <div class="powered-by pull-right">Powered by <a href="http://www.copyrighthub.org/" target="blank"><img src="/assets/images/copyrightlogo.png"></a></div>
+
+        </div><!-- /.box -->
 
       </div>
 
