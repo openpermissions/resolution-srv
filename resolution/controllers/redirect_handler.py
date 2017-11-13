@@ -93,6 +93,28 @@ def _get_providers_by_type_and_id(source_id_type, source_id):
         raise exceptions.HTTPError(exc.code, msg, source='query')
 
 @coroutine
+def _get_offers_by_type_and_id(source_id_type, source_id):
+    """ get asset offers for given type and id
+    :param source_id_type: str
+    :param source_id: str
+    :returns: list of offers json
+    :raises: koi.exceptions.HTTPError
+    """
+    client = API(options.url_query, ssl_options=ssl_server_options())
+
+    try:
+        req_body = '[{"source_id_type": "' + source_id_type + '", "source_id": "' + source_id + '"}]'
+        logging.debug(req_body)
+
+        client.query.search.offers.prepare_request(headers={'Content-Type': 'application/json'},
+                                                body=req_body.strip())
+        res = yield client.query.search.offers.post()
+        raise Return(res['data'])        
+    except httpclient.HTTPError as exc:
+        msg = 'Unexpected error ' + exc.message
+        raise exceptions.HTTPError(exc.code, msg, source='query')
+
+@coroutine
 def _get_asset_details(hubkey):
     """ get the asset details from a hubkey
     """
@@ -255,6 +277,10 @@ class RedirectHandler(base.BaseHandler):
         reference_links = provider.get('reference_links')
 
         link_for_id_type = yield resolve_link_id_type(reference_links, parsed_key)
+
+        # get offers
+        offers = yield _get_offers_by_type_and_id(assetIdType, assetId)
+        logging.debug('got offers : ' + str(offers))
 
         if link_for_id_type:
             # replace tokens in reference link with real values

@@ -42,7 +42,7 @@
                         </thead>
                         {% for provider in providers %}
                         <tr>
-                          <td>Example Company</td>
+                          <td>{{ provider['name'] }}</td>
                           <td><a href="/s0/hub1/creation/{{ provider['id'] }}/{{ assetIdType }}/{{ assetId }}">Click here to view licensing information</a></td>
                         </tr>
                         {% end %}
