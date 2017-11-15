@@ -110,8 +110,12 @@
                     {% for offer in offers %}
                     <tr>
                       <td>{{ offer['title'] }}</td>
-                      <td>{{ offer['description'] }}</td>
-                      <td><a href="#{{ offer['id'] }}"><button class="btn btn-default">Get license</button></a></td>
+                      <td>{% raw offer['description'] %}</td>
+                      <td>
+                        {% if offer['link'] %}
+                        <a href="{{ offer['link'] }}"><button class="btn btn-default">Get license</button></a>
+                        {% end %}
+                      </td>
                     </tr>
                     {% end %}
                 </table>

@@ -23,7 +23,9 @@ from tornado.gen import coroutine, Return
 from tornado.options import options, define
 from tornado.web import RedirectHandler
 
-from hub_key_handler import _parse_hub_key, resolve_link_id_type, _redirect_url, _get_repos_for_source_id
+from hub_key_handler import _parse_hub_key, resolve_link_id_type, resolve_payment_link_id_type
+from hub_key_handler import _redirect_url, _get_repos_for_source_id
+                                
 
 define('redirect_to_website', default='http://openpermissions.org/',
        help='The website to which the resolution service redirects for unknown requests')
@@ -148,16 +150,23 @@ def _getCleanQuerystringParts(cls):
 
     return cleanQs
 
-def _mergeQuerystrings(cls, linkUrl):
+def _mergeQuerystrings(cls, linkUrl, offer_id=None):
     """
     takes the linkUrl and adds in any querystring params in the request Url
 
     returns url string
     """
+    if not linkUrl:
+        return ''
+
     url_parts = list(urlparse(linkUrl))
     linkQs = parse_qs(url_parts[4])
 
     linkQs.update(_getCleanQuerystringParts(cls))
+
+    # add the offer_id if there is one
+    if offer_id:
+        linkQs.update({ 'offer_id': offer_id})
 
     url_parts[4] = urlencode(linkQs, True)
 
@@ -264,20 +273,23 @@ class RedirectHandler(base.BaseHandler):
 
     @coroutine
     def redirectToAsset(self, provider, assetIdType, assetId):
-        # build dummy hub_key so we can re-use existing code to de-code
+        # build dummy hub_key so we can re-use existing code to extract asset details
         repo_ids = yield _get_repos_for_source_id(assetIdType.lower(), assetId)
         repository_id = repo_ids[0]['repository_id']
         entity_id = repo_ids[0]['entity_id']
         dummy_hub_key = "http://copyrighthub.org/s1/hub1/%s/asset/%s" % (repository_id, entity_id)
 
-        logging.debug(dummy_hub_key)
-
         parsed_key = yield _parse_hub_key(dummy_hub_key)
 
         reference_links = provider.get('reference_links')
 
+        # get reference links
         link_for_id_type = yield resolve_link_id_type(reference_links, parsed_key)
 
+        # get payment link
+        payment_link = yield resolve_payment_link_id_type(provider.get('payment', ''), parsed_key)
+
+        # use the reference link if there is one
         if link_for_id_type:
             # replace tokens in reference link with real values
             redirect = _redirect_url(link_for_id_type, parsed_key)
@@ -289,7 +301,6 @@ class RedirectHandler(base.BaseHandler):
         else:
             # get asset details
             details = yield _get_asset_details(dummy_hub_key)
-            logging.debug('got details : ' + str(details))
 
             asset_details = []
             asset_description = ''
@@ -301,7 +312,7 @@ class RedirectHandler(base.BaseHandler):
                             'id': item['op:value']['@value'],
                             'idType': item['op:id_type']['@id'][4:]
                         }
-                        logging.debug('asset detail ' + str(asset_detail))
+
                         asset_details.append(asset_detail)
                     elif item.get('@type', '') == "op:Asset":
                         asset_description = item['dcterm:description']['@value']
@@ -312,20 +323,16 @@ class RedirectHandler(base.BaseHandler):
             offer_details = []
 
             if offers:
-                logging.debug('got offers : ' + str(offers[0]))
                 for offer in offers[0]['offers']:
                     # find the actual offer details inside the @graph node
                     for snippet in offer['@graph']:
-                        logging.debug('snip ' + str(snippet))
                         if snippet.get('type', '') == 'offer':
                             offer_detail = {
                                 'title': snippet['dcterm:title'],
                                 'description': snippet['op:policyDescription'],
-                                'id': snippet['@id'][3:]
+                                'link': _mergeQuerystrings(self, payment_link, snippet['@id'][3:])
                             }
                             
-                            logging.debug('offer details : ' + str(offer_detail))
-
                             offer_details.append(offer_detail)
 
             self.render('asset_template.html', data=provider, assets=asset_details, 

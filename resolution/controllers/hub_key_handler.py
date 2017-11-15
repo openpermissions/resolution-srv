@@ -173,6 +173,32 @@ def resolve_link_id_type(reference_links, parsed_key):
 
     raise Return(link_for_id_type)
 
+@coroutine
+def resolve_payment_link_id_type(payment, parsed_key):
+    if not payment:
+        raise Return(None)
+
+    redirect_id_type = payment.get("source_id_type", None)
+    if not redirect_id_type:
+        raise Return(None)
+
+    _link_for_id_type = payment.get("url", None)
+
+    if not _link_for_id_type:
+        raise Return(None)
+
+    if '{source_id}' not in _link_for_id_type:
+        raise Return(_link_for_id_type)
+
+    source_ids = yield _get_ids(parsed_key['repository_id'], parsed_key['entity_id'])
+
+    link_for_id_type = None
+    for cid in source_ids:
+        if cid["source_id_type"] == redirect_id_type:
+            link_for_id_type = _link_for_id_type.format(source_id=urllib.quote_plus(cid["source_id"]))
+
+    raise Return(link_for_id_type)    
+
 def parse_url(url):
     """Parse a url. If it's got no protocol, adds
     http. If it has protocol, keep it.
