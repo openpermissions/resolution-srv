@@ -196,6 +196,15 @@ def _getHostSubDomain(cls):
 
     return subDomain
 
+def getOfferTextValue(offerSnippet, attributeName):
+    try:
+        return offerSnippet[attributeName]['@value']
+    except:
+        try:
+            return offerSnippet[attributeName]
+        except:
+            return ''
+
 
 
 class RedirectHandler(base.BaseHandler):
@@ -216,6 +225,9 @@ class RedirectHandler(base.BaseHandler):
         providerId = self.get_query_argument('hubpid', None)
         assetIdType = self.get_query_argument('hubidt', None)
         assetId = self.get_query_argument('hubaid', None)
+        
+        global showJson
+        showJson = self.get_query_argument('hubjson', None)
 
         # get the subdomain from the request
         hostProvider = _getHostSubDomain(self)
@@ -289,51 +301,62 @@ class RedirectHandler(base.BaseHandler):
         # get payment link
         payment_link = yield resolve_payment_link_id_type(provider.get('payment', ''), parsed_key)
 
-        # use the reference link if there is one
-        if link_for_id_type:
-            # replace tokens in reference link with real values
-            redirect = _redirect_url(link_for_id_type, parsed_key)
+        # get asset details
+        details = yield _get_asset_details(dummy_hub_key)
 
-            # add passed-in querystring values
-            redirect = _mergeQuerystrings(self, redirect)
+        asset_details = []
+        asset_description = ''
 
-            self.redirect(redirect)
-        else:
-            # get asset details
-            details = yield _get_asset_details(dummy_hub_key)
+        if details.get('@graph', '') != '':
+            for item in details['@graph']:
+                if item.get('@type', '') == "op:Id":
+                    asset_detail = {
+                        'id': item['op:value']['@value'],
+                        'idType': item['op:id_type']['@id'][4:]
+                    }
 
-            asset_details = []
-            asset_description = ''
+                    asset_details.append(asset_detail)
+                elif item.get('@type', '') == "op:Asset":
+                    asset_description = item['dcterm:description']['@value']
 
-            if details.get('@graph', '') != '':
-                for item in details['@graph']:
-                    if item.get('@type', '') == "op:Id":
-                        asset_detail = {
-                            'id': item['op:value']['@value'],
-                            'idType': item['op:id_type']['@id'][4:]
+        # get offers
+        offers = yield _get_offers_by_type_and_id(assetIdType, assetId)
+
+        offer_details = []
+
+        if offers:
+            for offer in offers[0]['offers']:
+                # find the actual offer details inside the @graph node
+                for snippet in offer['@graph']:
+                    if snippet.get('type', '') == 'offer':
+                        offer_detail = {
+                            'title': getOfferTextValue(snippet, 'dcterm:title'),
+                            'description': getOfferTextValue(snippet, 'op:policyDescription'),
+                            'link': _mergeQuerystrings(self, payment_link, snippet['@id'][3:])
                         }
+                        
+                        offer_details.append(offer_detail)
 
-                        asset_details.append(asset_detail)
-                    elif item.get('@type', '') == "op:Asset":
-                        asset_description = item['dcterm:description']['@value']
+        # return Json if requested to
+        if showJson:
+            self.set_header('Content-Type', 'application/json; charset=UTF-8')
 
-            # get offers
-            offers = yield _get_offers_by_type_and_id(assetIdType, assetId)
+            res = {
+                'asset': details,
+                'provider': provider,
+                'offers': offers
+            }
+            self.write(res)
+        else:
+            # use the reference link if there is one
+            if link_for_id_type:
+                # replace tokens in reference link with real values
+                redirect = _redirect_url(link_for_id_type, parsed_key)
 
-            offer_details = []
+                # add passed-in querystring values
+                redirect = _mergeQuerystrings(self, redirect)
 
-            if offers:
-                for offer in offers[0]['offers']:
-                    # find the actual offer details inside the @graph node
-                    for snippet in offer['@graph']:
-                        if snippet.get('type', '') == 'offer':
-                            offer_detail = {
-                                'title': snippet['dcterm:title'],
-                                'description': snippet['op:policyDescription'],
-                                'link': _mergeQuerystrings(self, payment_link, snippet['@id'][3:])
-                            }
-                            
-                            offer_details.append(offer_detail)
-
-            self.render('asset_template.html', data=provider, assets=asset_details, 
-                            description=asset_description, offers=offer_details)
+                self.redirect(redirect)
+            else:
+                self.render('asset_template.html', data=provider, assets=asset_details, 
+                                description=asset_description, offers=offer_details)
