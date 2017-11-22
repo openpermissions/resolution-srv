@@ -205,7 +205,15 @@ def getOfferTextValue(offerSnippet, attributeName):
         except:
             return ''
 
-
+def testNodeContainsValue(node, prop, searchValue):
+    if not node or not prop or not searchValue:
+        return False
+    elif node.get(prop, '') == '':
+        return False
+    elif isinstance(node.get(prop), basestring):
+        return (node.get(prop) == searchValue)
+    else:
+        return (searchValue in node.get(prop))
 
 class RedirectHandler(base.BaseHandler):
     def initialize(self, **kwargs):
@@ -309,14 +317,13 @@ class RedirectHandler(base.BaseHandler):
 
         if details.get('@graph', '') != '':
             for item in details['@graph']:
-                if item.get('@type', '') == "op:Id":
+                if testNodeContainsValue(item, '@type', 'op:Id'):
                     asset_detail = {
                         'id': item['op:value']['@value'],
                         'idType': item['op:id_type']['@id'][4:]
                     }
-
                     asset_details.append(asset_detail)
-                elif item.get('@type', '') == "op:Asset":
+                elif testNodeContainsValue(item, '@type', 'op:Asset'):
                     asset_description = item['dcterm:description']['@value']
 
         # get offers
