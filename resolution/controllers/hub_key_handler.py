@@ -9,7 +9,9 @@
 
 """Resolve a Hub Key"""
 import urllib
-from urlparse import urlparse
+
+from urllib import urlencode
+from urlparse import urlparse, parse_qs, urlunparse
 
 from bass import hubkey
 from chub import API
@@ -44,6 +46,26 @@ def _get_repository(repository_id):
 
         raise exceptions.HTTPError(exc.code, msg, source='accounts')
 
+@coroutine
+def _get_provider_by_name(provider):
+    """Get a provider from the accounts service
+
+    :param provider: str
+    :returns: organisation resource
+    :raises: koi.exceptions.HTTPError
+    """
+    client = API(options.url_accounts, ssl_options=ssl_server_options())
+
+    try:
+        res = yield client.accounts.organisations.get(name=provider)
+        raise Return(res['data'][0])
+    except httpclient.HTTPError as exc:
+        if exc.code == 404:
+            msg = 'Unknown provider'
+        else:
+            msg = 'Unexpected error ' + exc.message
+
+        raise exceptions.HTTPError(exc.code, msg, source='accounts')
 
 @coroutine
 def _get_provider(provider_id):
@@ -65,7 +87,6 @@ def _get_provider(provider_id):
             msg = 'Unexpected error'
 
         raise exceptions.HTTPError(exc.code, msg, source='accounts')
-
 
 @coroutine
 def _get_ids(repository_id, entity_id):
@@ -128,7 +149,7 @@ def _parse_hub_key(hub_key):
         raise exceptions.HTTPError(404, 'Invalid hub key: ' + exc.message)
 
     parsed['provider'] = provider['data']
-    parsed['provider']['website'] = parse_url(parsed['provider'].get('website', ''))
+    parsed['provider']['website'] = _parse_url(parsed['provider'].get('website', ''))
     parsed['hub_key'] = hub_key
 
     raise Return(parsed)
@@ -199,7 +220,7 @@ def resolve_payment_link_id_type(payment, parsed_key):
 
     raise Return(link_for_id_type)    
 
-def parse_url(url):
+def _parse_url(url):
     """Parse a url. If it's got no protocol, adds
     http. If it has protocol, keep it.
     :param url: a url or domain or ip
@@ -211,6 +232,180 @@ def parse_url(url):
         url = 'http://' + url
     return url
 
+@coroutine
+def _get_asset_details(hubkey):
+    """ get the asset details from a hubkey
+    """
+    client = API(options.url_query, ssl_options=ssl_server_options())
+
+    try:
+        res = yield client.query.entities.get(hub_key=hubkey)
+        raise Return(res['data'])
+    except httpclient.HTTPError as exc:
+        if exc.code == 404:
+            msg = 'No matching asset found'
+        else:
+            msg = 'Unexpected error ' + exc.message
+
+        raise exceptions.HTTPError(exc.code, msg, source='query')
+
+def getOfferTextValue(offerSnippet, attributeName):
+    try:
+        return offerSnippet[attributeName]['@value']
+    except:
+        try:
+            return offerSnippet[attributeName]
+        except:
+            return ''
+
+def testNodeContainsValue(node, prop, searchValue):
+    if not node or not prop or not searchValue:
+        return False
+    elif node.get(prop, '') == '':
+        return False
+    elif isinstance(node.get(prop), basestring):
+        return (node.get(prop) == searchValue)
+    else:
+        return (searchValue in node.get(prop))
+
+@coroutine
+def _get_offers_by_type_and_id(source_id_type, source_id):
+    """ get asset offers for given type and id
+    :param source_id_type: str
+    :param source_id: str
+    :returns: list of offers json
+    :raises: koi.exceptions.HTTPError
+    """
+    client = API(options.url_query, ssl_options=ssl_server_options())
+
+    try:
+        req_body = '[{"source_id_type": "' + source_id_type + '", "source_id": "' + source_id + '"}]'
+        logging.debug(req_body)
+
+        client.query.search.offers.prepare_request(headers={'Content-Type': 'application/json'},
+                                                body=req_body.strip())
+        res = yield client.query.search.offers.post()
+        raise Return(res['data'])        
+    except httpclient.HTTPError as exc:
+        msg = 'Unexpected error ' + exc.message
+        raise exceptions.HTTPError(exc.code, msg, source='query')
+
+def _getCleanQuerystringParts(cls):
+    """
+    strip our internal parameters from the querystring and return all others
+
+    returns a dict
+    """
+    cleanQs = {}
+
+    qs = cls.request.query
+    parts = parse_qs(qs)
+
+    for x in parts:
+        if x not in ['hubpid', 'hubidt', 'hubaid']:
+            cleanQs[x] = parts[x]
+
+    return cleanQs
+
+def _mergeQuerystrings(cls, linkUrl, offer_id=None):
+    """
+    takes the linkUrl and adds in any querystring params in the request Url
+
+    returns url string
+    """
+    if not linkUrl:
+        return ''
+
+    url_parts = list(urlparse(linkUrl))
+    linkQs = parse_qs(url_parts[4])
+
+    linkQs.update(_getCleanQuerystringParts(cls))
+
+    # add the offer_id if there is one
+    if offer_id:
+        linkQs.update({ 'offer_id': offer_id})
+
+    url_parts[4] = urlencode(linkQs, True)
+
+    return urlunparse(url_parts)
+            
+@coroutine
+def redirectToAsset(cls, provider, assetIdType, assetId, showJson=None):
+    # build dummy hub_key so we can re-use existing code to extract asset details
+    logging.debug('type: ' + assetIdType + " entity:" + assetId)
+    repo_ids = yield _get_repos_for_source_id(assetIdType.lower(), assetId)
+    repository_id = repo_ids[0]['repository_id']
+    entity_id = repo_ids[0]['entity_id']
+    dummy_hub_key = "http://copyrighthub.org/s1/hub1/%s/asset/%s" % (repository_id, entity_id)
+
+    parsed_key = yield _parse_hub_key(dummy_hub_key)
+
+    reference_links = provider.get('reference_links')
+
+    # get reference links
+    link_for_id_type = yield resolve_link_id_type(reference_links, parsed_key)
+
+    # get payment link
+    payment_link = yield resolve_payment_link_id_type(provider.get('payment', ''), parsed_key)
+
+    # get asset details
+    details = yield _get_asset_details(dummy_hub_key)
+
+    asset_details = []
+    asset_description = ''
+
+    if details.get('@graph', '') != '':
+        for item in details['@graph']:
+            if testNodeContainsValue(item, '@type', 'op:Id'):
+                asset_detail = {
+                    'id': item['op:value']['@value'],
+                    'idType': item['op:id_type']['@id'][4:]
+                }
+                asset_details.append(asset_detail)
+            elif testNodeContainsValue(item, '@type', 'op:Asset'):
+                asset_description = item['dcterm:description']['@value']
+
+    # get offers
+    offers = yield _get_offers_by_type_and_id(assetIdType, assetId)
+
+    offer_details = []
+
+    if offers:
+        for offer in offers[0]['offers']:
+            # find the actual offer details inside the @graph node
+            for snippet in offer['@graph']:
+                if snippet.get('type', '') == 'offer':
+                    offer_detail = {
+                        'title': getOfferTextValue(snippet, 'dcterm:title'),
+                        'description': getOfferTextValue(snippet, 'op:policyDescription'),
+                        'link': _mergeQuerystrings(cls, payment_link, snippet['@id'][3:])
+                    }
+                    
+                    offer_details.append(offer_detail)
+
+    # return Json if requested to
+    if showJson:
+        cls.set_header('Content-Type', 'application/json; charset=UTF-8')
+
+        res = {
+            'asset': details,
+            'provider': provider,
+            'offers': offers
+        }
+        cls.write(res)
+    else:
+        # use the reference link if there is one
+        if link_for_id_type:
+            # replace tokens in reference link with real values
+            redirect = _redirect_url(link_for_id_type, parsed_key)
+
+            # add passed-in querystring values
+            redirect = _mergeQuerystrings(cls, redirect)
+
+            cls.redirect(redirect)
+        else:
+            cls.render('asset_template.html', data=provider, assets=asset_details, 
+                            description=asset_description, offers=offer_details)
 
 def _redirect_url(url, parsed_key):
     """Take a redirect url string,
@@ -252,6 +447,7 @@ class HubKeyHandler(base.BaseHandler):
 
         self.render('error.html', errors=errors)
 
+
     @coroutine
     def get(self):
         """
@@ -267,13 +463,10 @@ class HubKeyHandler(base.BaseHandler):
             self.finish()
             raise Return()
 
-        reference_links = parsed_key['provider'].get('reference_links')
-        link_for_id_type = yield resolve_link_id_type(reference_links, parsed_key)
+        logging.debug('parsed : ' + str(parsed_key))
+        provider = parsed_key['provider']
+        assetIdType = parsed_key['id_type']
+        assetId = parsed_key['entity_id']
 
-        if link_for_id_type:
-            redirect = _redirect_url(link_for_id_type, parsed_key)
-            self.redirect(redirect)
-        elif 'application/json' in self.request.headers.get('Accept', '').split(';'):
-            self.write(parsed_key)
-        else:
-            self.render('asset_template.html', hub_key=parsed_key)
+        yield redirectToAsset(self, provider, assetIdType, assetId)
+        
