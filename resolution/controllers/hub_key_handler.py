@@ -362,8 +362,8 @@ def redirectToAsset(cls, provider, assetIdType, assetId, showJson=None):
                     'idType': item['op:id_type']['@id'][4:]
                 }
                 asset_details.append(asset_detail)
-            elif testNodeContainsValue(item, '@type', 'op:Asset'):
-                asset_description = item['dcterm:description']['@value']
+            elif testNodeContainsValue(item, '@type', 'op:Asset') and item.get('dcterm:description', '') != '':
+                asset_description = item['dcterm:description'].get('@value', '')
 
     # get offers
     offers = yield _get_offers_by_type_and_id(assetIdType, assetId)
