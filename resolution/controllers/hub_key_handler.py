@@ -139,7 +139,7 @@ def _parse_hub_key(hub_key):
     """
     try:
         parsed = hubkey.parse_hub_key(hub_key)
-        logging.debug(parsed)
+
         if parsed['schema_version'] == 's0':
             provider = yield _get_provider(parsed['organisation_id'])
         else:
@@ -163,6 +163,8 @@ def resolve_link_id_type(reference_links, parsed_key):
 
     if not redirect_id_type:
         raise Return(None)
+
+    redirect_id_type = redirect_id_type.lower()
 
     _link_for_id_type = reference_links.get("links",{}).get(redirect_id_type)
 
@@ -189,19 +191,22 @@ def resolve_link_id_type(reference_links, parsed_key):
 
     link_for_id_type = None
     for cid in source_ids:
-        if cid["source_id_type"] == redirect_id_type:
+        if cid["source_id_type"].lower() == redirect_id_type:
             link_for_id_type = _link_for_id_type.format(source_id=urllib.quote_plus(cid["source_id"]))
 
     raise Return(link_for_id_type)
 
 @coroutine
-def resolve_payment_link_id_type(payment, parsed_key):
+def resolve_payment_link_id_type(payment, parsed_key, offer_id):
     if not payment:
         raise Return(None)
 
     redirect_id_type = payment.get("source_id_type", None)
+
     if not redirect_id_type:
         raise Return(None)
+
+    redirect_id_type = redirect_id_type.lower()
 
     _link_for_id_type = payment.get("url", None)
 
@@ -215,8 +220,11 @@ def resolve_payment_link_id_type(payment, parsed_key):
 
     link_for_id_type = None
     for cid in source_ids:
-        if cid["source_id_type"] == redirect_id_type:
-            link_for_id_type = _link_for_id_type.format(source_id=urllib.quote_plus(cid["source_id"]))
+        if cid["source_id_type"].lower() == redirect_id_type:
+            try:
+                link_for_id_type = _link_for_id_type.format(source_id=urllib.quote_plus(cid["source_id"]), offer_id=offer_id)
+            except KeyError:
+                raise exceptions.HTTPError(500, 'Payment link missing either {source_id} or {offer_id}', source='resolution')
 
     raise Return(link_for_id_type)    
 
@@ -280,7 +288,6 @@ def _get_offers_by_type_and_id(source_id_type, source_id):
 
     try:
         req_body = '[{"source_id_type": "' + source_id_type + '", "source_id": "' + source_id + '"}]'
-        logging.debug(req_body)
 
         client.query.search.offers.prepare_request(headers={'Content-Type': 'application/json'},
                                                 body=req_body.strip())
@@ -307,7 +314,7 @@ def _getCleanQuerystringParts(cls):
 
     return cleanQs
 
-def _mergeQuerystrings(cls, linkUrl, offer_id=None):
+def _mergeQuerystrings(cls, linkUrl):
     """
     takes the linkUrl and adds in any querystring params in the request Url
 
@@ -321,10 +328,6 @@ def _mergeQuerystrings(cls, linkUrl, offer_id=None):
 
     linkQs.update(_getCleanQuerystringParts(cls))
 
-    # add the offer_id if there is one
-    if offer_id:
-        linkQs.update({ 'offer_id': offer_id})
-
     url_parts[4] = urlencode(linkQs, True)
 
     return urlunparse(url_parts)
@@ -332,7 +335,6 @@ def _mergeQuerystrings(cls, linkUrl, offer_id=None):
 @coroutine
 def redirectToAsset(cls, provider, assetIdType, assetId, showJson=None):
     # build dummy hub_key so we can re-use existing code to extract asset details
-    logging.debug('type: ' + assetIdType + " entity:" + assetId)
     repo_ids = yield _get_repos_for_source_id(assetIdType.lower(), assetId)
     repository_id = repo_ids[0]['repository_id']
     entity_id = repo_ids[0]['entity_id']
@@ -344,9 +346,6 @@ def redirectToAsset(cls, provider, assetIdType, assetId, showJson=None):
 
     # get reference links
     link_for_id_type = yield resolve_link_id_type(reference_links, parsed_key)
-
-    # get payment link
-    payment_link = yield resolve_payment_link_id_type(provider.get('payment', ''), parsed_key)
 
     # get asset details
     details = yield _get_asset_details(dummy_hub_key)
@@ -370,15 +369,19 @@ def redirectToAsset(cls, provider, assetIdType, assetId, showJson=None):
 
     offer_details = []
 
-    if offers:
+    if offers and provider.get('payment', None):
         for offer in offers[0]['offers']:
             # find the actual offer details inside the @graph node
             for snippet in offer['@graph']:
                 if snippet.get('type', '') == 'offer':
+                    # get payment link
+                    offer_id = snippet['@id'][3:]
+                    payment_link = yield resolve_payment_link_id_type(provider.get('payment', ''), parsed_key, offer_id)
+
                     offer_detail = {
                         'title': getOfferTextValue(snippet, 'dcterm:title'),
                         'description': getOfferTextValue(snippet, 'op:policyDescription'),
-                        'link': _mergeQuerystrings(cls, payment_link, snippet['@id'][3:])
+                        'link': _mergeQuerystrings(cls, payment_link)
                     }
                     
                     offer_details.append(offer_detail)
@@ -463,7 +466,6 @@ class HubKeyHandler(base.BaseHandler):
             self.finish()
             raise Return()
 
-        logging.debug('parsed : ' + str(parsed_key))
         provider = parsed_key['provider']
         assetIdType = parsed_key['id_type']
         assetId = parsed_key['entity_id']
