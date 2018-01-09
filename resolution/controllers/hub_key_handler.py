@@ -333,22 +333,27 @@ def _mergeQuerystrings(cls, linkUrl):
     return urlunparse(url_parts)
             
 @coroutine
-def redirectToAsset(cls, provider, assetIdType, assetId, showJson=None):
-    # build dummy hub_key so we can re-use existing code to extract asset details
-    repo_ids = yield _get_repos_for_source_id(assetIdType.lower(), assetId)
-    repository_id = repo_ids[0]['repository_id']
-    entity_id = repo_ids[0]['entity_id']
-    dummy_hub_key = "http://copyrighthub.org/s1/hub1/%s/asset/%s" % (repository_id, entity_id)
+def redirectToAsset(cls, provider, assetIdType, assetId, showJson=None, hub_key=None):
+    if not assetIdType and hub_key:
+        parsed_key = yield _parse_hub_key(hub_key)
+         # get asset details
+        details = yield _get_asset_details(hub_key)
+    else:
+        # build dummy hub_key so we can re-use existing code to extract asset details
+        repo_ids = yield _get_repos_for_source_id(assetIdType.lower(), assetId)
+        repository_id = repo_ids[0]['repository_id']
+        entity_id = repo_ids[0]['entity_id']
+        dummy_hub_key = "http://copyrighthub.org/s1/hub1/%s/asset/%s" % (repository_id, entity_id)
 
-    parsed_key = yield _parse_hub_key(dummy_hub_key)
+        parsed_key = yield _parse_hub_key(dummy_hub_key)
+
+        # get asset details
+        details = yield _get_asset_details(dummy_hub_key)
 
     reference_links = provider.get('reference_links')
 
     # get reference links
     link_for_id_type = yield resolve_link_id_type(reference_links, parsed_key)
-
-    # get asset details
-    details = yield _get_asset_details(dummy_hub_key)
 
     asset_details = []
     asset_description = ''
@@ -361,6 +366,11 @@ def redirectToAsset(cls, provider, assetIdType, assetId, showJson=None):
                     'idType': item['op:id_type']['@id'][4:]
                 }
                 asset_details.append(asset_detail)
+
+                # save the asset's id and type if we don't know it (resolving a hub_key)
+                if not assetIdType:
+                    assetIdType = item['op:value']['@value']
+                    assetId = item['op:id_type']['@id'][4:]
             elif testNodeContainsValue(item, '@type', 'op:Asset') and item.get('dcterm:description', '') != '':
                 asset_description = item['dcterm:description'].get('@value', '')
 
@@ -467,8 +477,7 @@ class HubKeyHandler(base.BaseHandler):
             raise Return()
 
         provider = parsed_key['provider']
-        assetIdType = parsed_key['id_type']
+        assetIdType = parsed_key.get('id_type', None)
         assetId = parsed_key['entity_id']
 
-        yield redirectToAsset(self, provider, assetIdType, assetId)
-        
+        yield redirectToAsset(self, provider, assetIdType, assetId, None, hub_key)
