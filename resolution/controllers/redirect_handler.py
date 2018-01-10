@@ -21,10 +21,12 @@ from tornado.options import options, define
 from tornado.web import RedirectHandler
 
 from hub_key_handler import redirectToAsset, _get_provider_by_name
+from memoize import Memoize
 
 define('redirect_to_website', default='http://openpermissions.org/',
        help='The website to which the resolution service redirects for unknown requests')
 
+@Memoize
 @coroutine
 def _get_providers_by_type_and_id(source_id_type, source_id):
     """ get the matching providers for a given source_id_type and source_id
@@ -142,6 +144,7 @@ class RedirectHandler(base.BaseHandler):
             logging.debug("B : all specified")
             # look up reference links stuff and redirect
             provider = yield _get_provider_by_name(providerId)
+            logging.debug ('prov ' + str(provider))
             yield redirectToAsset(self, provider, assetIdType, assetId, showJson)
         else:
             # this should never happen so return error if it does
