@@ -11,11 +11,10 @@ from tornado.options import options
 
 import time
 
-import logging
-
 from tornado.gen import coroutine, Return
 
-class Memoize:
+# memoize a coroutine
+class MemoizeCoroutine:
     def __init__(self, fn):
         self.fn = fn
         self.memo = {}
@@ -29,19 +28,44 @@ class Memoize:
             self.memo = {}
             self.timestamp = {}
             self.items = 0
-            logging.debug('mem cleared')
             
         if args not in self.memo:
             # execute function and store if not already in memo
             self.memo[args] = yield self.fn(*args)
             self.timestamp[args] = time.time()
             self.items += 1
-            logging.debug('mem stored new')
+
         elif time.time() > self.timestamp[args] + options.memoize_seconds:
             # execute function and store if passed expiry time
             self.memo[args] = yield self.fn(*args)
             self.timestamp[args] = time.time()
-            logging.debug('mem refreshed existing')
 
-        logging.debug('mem : ' + str(self.memo[args]))
         raise Return(self.memo[args])
+
+# memoize a normal function
+class Memoize:
+    def __init__(self, fn):
+        self.fn = fn
+        self.memo = {}
+        self.timestamp = {}
+        self.items = 0
+
+    def __call__(self, *args):
+        # clear if too many items (to stop memory being consumed indefinitely)
+        if self.items > options.memoize_max_items:
+            self.memo = {}
+            self.timestamp = {}
+            self.items = 0
+            
+        if args not in self.memo:
+            # execute function and store if not already in memo
+            self.memo[args] = self.fn(*args)
+            self.timestamp[args] = time.time()
+            self.items += 1
+
+        elif time.time() > self.timestamp[args] + options.memoize_seconds:
+            # execute function and store if passed expiry time
+            self.memo[args] = self.fn(*args)
+            self.timestamp[args] = time.time()
+
+        return self.memo[args]
