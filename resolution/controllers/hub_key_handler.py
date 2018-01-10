@@ -23,7 +23,7 @@ from tornado.options import options
 
 from chub.oauth2 import Read, get_token
 
-from memoize import Memoize
+from memoize import MemoizeCoroutine
 
 import logging
 
