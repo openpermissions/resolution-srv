@@ -11,6 +11,10 @@ from tornado.options import options
 
 import time
 
+import logging
+
+from tornado.gen import coroutine, Return
+
 class Memoize:
     def __init__(self, fn):
         self.fn = fn
@@ -18,21 +22,26 @@ class Memoize:
         self.timestamp = {}
         self.items = 0
 
+    @coroutine
     def __call__(self, *args):
         # clear if too many items (to stop memory being consumed indefinitely)
         if self.items > options.memoize_max_items:
             self.memo = {}
             self.timestamp = {}
             self.items = 0
+            logging.debug('mem cleared')
             
         if args not in self.memo:
             # execute function and store if not already in memo
-            self.memo[args] = self.fn(*args)
+            self.memo[args] = yield self.fn(*args)
             self.timestamp[args] = time.time()
             self.items += 1
+            logging.debug('mem stored new')
         elif time.time() > self.timestamp[args] + options.memoize_seconds:
             # execute function and store if passed expiry time
-            self.memo[args] = self.fn(*args)
+            self.memo[args] = yield self.fn(*args)
             self.timestamp[args] = time.time()
+            logging.debug('mem refreshed existing')
 
-        return self.memo[args]
+        logging.debug('mem : ' + str(self.memo[args]))
+        raise Return(self.memo[args])

@@ -27,7 +27,7 @@ from memoize import Memoize
 
 import logging
 
-@Memoize
+@MemoizeCoroutine
 @coroutine
 def _get_repository(repository_id):
     """Get a repository from the accounts service
@@ -49,7 +49,7 @@ def _get_repository(repository_id):
 
         raise exceptions.HTTPError(exc.code, msg, source='accounts')
 
-@Memoize
+@MemoizeCoroutine
 @coroutine
 def _get_provider_by_name(provider):
     """Get a provider from the accounts service
@@ -71,7 +71,7 @@ def _get_provider_by_name(provider):
 
         raise exceptions.HTTPError(exc.code, msg, source='accounts')
 
-@Memoize
+@MemoizeCoroutine
 @coroutine
 def _get_provider(provider_id):
     """Get a provider from the accounts service
@@ -93,7 +93,7 @@ def _get_provider(provider_id):
 
         raise exceptions.HTTPError(exc.code, msg, source='accounts')
 
-@Memoize
+@MemoizeCoroutine
 @coroutine
 def _get_ids(repository_id, entity_id):
     """Get ids from the repository service
@@ -118,7 +118,7 @@ def _get_ids(repository_id, entity_id):
     except httpclient.HTTPError as exc:
         raise exceptions.HTTPError(exc.code, str(exc), source='repository')
 
-@Memoize
+@MemoizeCoroutine
 @coroutine
 def _get_repos_for_source_id(source_id_type, source_id):
     """Get repositories having information about a specific source_id
@@ -136,7 +136,7 @@ def _get_repos_for_source_id(source_id_type, source_id):
     repos = yield client.index['entity-types']['asset']['id-types'][source_id_type].ids[source_id].repositories.get()
     raise Return(repos['data']['repositories'])
 
-@Memoize
+@MemoizeCoroutine
 @coroutine
 def _parse_hub_key(hub_key):
     """Parse a hub key
@@ -248,7 +248,7 @@ def _parse_url(url):
         url = 'http://' + url
     return url
 
-@Memoize
+@MemoizeCoroutine
 @coroutine
 def _get_asset_details(hubkey):
     """ get the asset details from a hubkey
@@ -285,7 +285,7 @@ def testNodeContainsValue(node, prop, searchValue):
     else:
         return (searchValue in node.get(prop))
 
-@Memoize
+@MemoizeCoroutine
 @coroutine
 def _get_offers_by_type_and_id(source_id_type, source_id):
     """ get asset offers for given type and id

@@ -21,12 +21,12 @@ from tornado.options import options, define
 from tornado.web import RedirectHandler
 
 from hub_key_handler import redirectToAsset, _get_provider_by_name
-from memoize import Memoize
+from memoize import MemoizeCoroutine
 
 define('redirect_to_website', default='http://openpermissions.org/',
        help='The website to which the resolution service redirects for unknown requests')
 
-@Memoize
+@MemoizeCoroutine
 @coroutine
 def _get_providers_by_type_and_id(source_id_type, source_id):
     """ get the matching providers for a given source_id_type and source_id
