@@ -350,7 +350,15 @@ def redirectToAsset(cls, provider, assetIdType, assetId, showJson=None, hub_key=
         details = yield _get_asset_details(hub_key)
     else:
         # build dummy hub_key so we can re-use existing code to extract asset details
-        repo_ids = yield _get_repos_for_source_id(assetIdType.lower(), assetId)
+        try:
+            repo_ids = yield _get_repos_for_source_id(assetIdType.lower(), assetId)
+        except httpclient.HTTPError as exc:
+            if exc.code == 404:
+                msg = 'No repository found for id/type combination'
+            else:
+                msg = 'Unexpected error ' + exc.message
+            raise exceptions.HTTPError(exc.code, msg, source='index')    
+
         repository_id = repo_ids[0]['repository_id']
         entity_id = repo_ids[0]['entity_id']
         dummy_hub_key = "http://copyrighthub.org/s1/hub1/%s/asset/%s" % (repository_id, entity_id)
