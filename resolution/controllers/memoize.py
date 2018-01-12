@@ -9,7 +9,7 @@
 
 from tornado.options import options
 
-import time
+import time, logging
 
 from tornado.gen import coroutine, Return
 
@@ -20,6 +20,10 @@ class MemoizeCoroutine:
         self.memo = {}
         self.timestamp = {}
         self.items = 0
+        self.num_hits = 0L
+        self.num_misses = 0L
+        self.num_refreshes = 0L
+        self.num_clearouts = 0L
 
     @coroutine
     def __call__(self, *args):
@@ -28,17 +32,24 @@ class MemoizeCoroutine:
             self.memo = {}
             self.timestamp = {}
             self.items = 0
+            self.num_clearouts += 1
             
         if args not in self.memo:
             # execute function and store if not already in memo
             self.memo[args] = yield self.fn(*args)
             self.timestamp[args] = time.time()
             self.items += 1
-
+            self.num_misses += 1
         elif time.time() > self.timestamp[args] + options.memoize_seconds:
             # execute function and store if passed expiry time
             self.memo[args] = yield self.fn(*args)
             self.timestamp[args] = time.time()
+            self.num_refreshes += 1
+        else:
+            self.num_hits += 1
+
+        logging.debug('MemoizeCoroutine : ' + str(self.fn))
+        logging.debug('hits:' + str(self.num_hits) + ' misses:' + str(self.num_misses) + ' refreshes:' + str(self.num_refreshes) + ' clears:' + str(self.num_clearouts))
 
         raise Return(self.memo[args])
 
@@ -49,6 +60,10 @@ class Memoize:
         self.memo = {}
         self.timestamp = {}
         self.items = 0
+        self.num_hits = 0L
+        self.num_misses = 0L
+        self.num_refreshes = 0L
+        self.num_clearouts = 0L
 
     def __call__(self, *args):
         # clear if too many items (to stop memory being consumed indefinitely)
@@ -56,16 +71,23 @@ class Memoize:
             self.memo = {}
             self.timestamp = {}
             self.items = 0
+            self.num_clearouts += 1
             
         if args not in self.memo:
             # execute function and store if not already in memo
             self.memo[args] = self.fn(*args)
             self.timestamp[args] = time.time()
             self.items += 1
-
+            self.num_misses += 1
         elif time.time() > self.timestamp[args] + options.memoize_seconds:
             # execute function and store if passed expiry time
             self.memo[args] = self.fn(*args)
             self.timestamp[args] = time.time()
+            self.num_refreshes += 1
+        else:
+            self.num_hits += 1
+
+        logging.debug('Memoize : ' + str(self.fn))
+        logging.debug('hits:' + str(self.num_hits) + ' misses:' + str(self.num_misses) + ' refreshes:' + str(self.num_refreshes) + ' clears:' + str(self.num_clearouts))
 
         return self.memo[args]
