@@ -387,8 +387,8 @@ def redirectToAsset(cls, provider, assetIdType, assetId, showJson=None, hub_key=
 
                 # save the asset's id and type if we don't know it (resolving a hub_key)
                 if not assetIdType:
-                    assetIdType = item['op:value']['@value']
-                    assetId = item['op:id_type']['@id'][4:]
+                    assetId = item['op:value']['@value']
+                    assetIdType = item['op:id_type']['@id'][4:]
             elif testNodeContainsValue(item, '@type', 'op:Asset') and item.get('dcterm:description', '') != '':
                 asset_description = item['dcterm:description'].get('@value', '')
 
