@@ -10,7 +10,7 @@
 """Resolve a Hub Key"""
 import urllib
 
-from urllib import urlencode
+from urllib import urlencode, unquote
 from urlparse import urlparse, parse_qs, urlunparse
 
 from bass import hubkey
@@ -435,6 +435,10 @@ def redirectToAsset(cls, provider, assetIdType, assetId, showJson=None, hub_key=
 
             cls.redirect(redirect)
         else:
+            for asset in asset_details:
+                asset['idType'] = unquote(asset['idType'])
+                asset['id'] = unquote(asset['id'])
+
             cls.render('asset_template.html', data=provider, assets=asset_details, 
                             description=asset_description, offers=offer_details)
 
