@@ -199,8 +199,8 @@ def resolve_link_id_type(reference_links, parsed_key):
 
     link_for_id_type = None
     for cid in source_ids:
-        if cid["source_id_type"].lower() == redirect_id_type:
-            link_for_id_type = _link_for_id_type.format(source_id=urllib.quote_plus(cid["source_id"]))
+        if urllib.unquote(cid["source_id_type"]).lower() == redirect_id_type:
+            link_for_id_type = _link_for_id_type.format(source_id=urllib.unquote(cid["source_id"]))
 
     raise Return(link_for_id_type)
 
@@ -228,9 +228,9 @@ def resolve_payment_link_id_type(payment, parsed_key, offer_id):
 
     link_for_id_type = None
     for cid in source_ids:
-        if cid["source_id_type"].lower() == redirect_id_type:
+        if urllib.unquote(cid["source_id_type"]).lower() == redirect_id_type:
             try:
-                link_for_id_type = _link_for_id_type.format(source_id=urllib.quote_plus(cid["source_id"]), offer_id=offer_id)
+                link_for_id_type = _link_for_id_type.format(source_id=urllib.unquote(cid["source_id"]), offer_id=offer_id)
             except KeyError:
                 raise exceptions.HTTPError(500, 'Payment link missing either {source_id} or {offer_id}', source='resolution')
 
@@ -337,9 +337,9 @@ def _mergeQuerystrings(cls, linkUrl):
     linkQs = parse_qs(url_parts[4])
 
     linkQs.update(_getCleanQuerystringParts(cls))
-
+    
     url_parts[4] = urlencode(linkQs, True)
-
+    
     return urlunparse(url_parts)
             
 @coroutine
