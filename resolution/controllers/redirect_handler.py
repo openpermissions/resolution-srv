@@ -126,7 +126,7 @@ class RedirectHandler(base.BaseHandler):
                 yield redirectToAsset(self, providers[0], assetIdType, assetId, showJson)
                 raise Return()
             else:
-                self.render('multiple_providers_template.html', providers=providers, assetIdType=assetIdType, assetId=assetId)
+                self.render('multiple_providers_template.html', providers=providers, assetIdType=urllib.quote_plus(assetIdType), assetId=urllib.quote_plus(assetId))
                 raise Return()
 
         # look for just providerId specified

@@ -502,4 +502,4 @@ class HubKeyHandler(base.BaseHandler):
         assetIdType = parsed_key.get('id_type', None)
         assetId = parsed_key['entity_id']
 
-        yield redirectToAsset(self, provider, assetIdType, assetId, None, hub_key)
+        yield redirectToAsset(self, provider, urllib.unquote(assetIdType), urllib.unquote(assetId), None, hub_key)
