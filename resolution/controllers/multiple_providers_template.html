@@ -40,10 +40,10 @@
                             <th>Licensing Information</th>
                           </tr>
                         </thead>
-                        {% for provider in providers %}
+                        {% for link in links %}
                         <tr>
-                          <td>{{ provider['name'] }}</td>
-                          <td><a href="/s0/hub1/creation/{{ provider['id'] }}/{{ assetIdType }}/{{ assetId }}">Click here to view licensing information</a></td>
+                          <td>{{ link['name'] }}</td>
+                          <td><a href="{{link['href']}}">Click here to view licensing information</a></td>
                         </tr>
                         {% end %}
                     </table>

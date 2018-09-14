@@ -15,12 +15,13 @@ import urllib
 from chub import API
 from koi import base, exceptions
 from koi.configure import ssl_server_options
+from bass.hubkey import generate_hub_key
 from tornado import httpclient, httputil
 from tornado.gen import coroutine, Return
 from tornado.options import options, define
 from tornado.web import RedirectHandler
 
-from hub_key_handler import redirectToAsset, _get_provider_by_name
+from hub_key_handler import redirectToAsset, _get_provider_by_name, _get_repository, _get_repos_for_source_id
 from memoize import MemoizeCoroutine
 
 define('redirect_to_website', default='http://openpermissions.org/',
@@ -126,7 +127,24 @@ class RedirectHandler(base.BaseHandler):
                 yield redirectToAsset(self, providers[0], assetIdType, assetId, showJson)
                 raise Return()
             else:
-                self.render('multiple_providers_template.html', providers=providers, assetIdType=urllib.quote_plus(assetIdType), assetId=urllib.quote_plus(assetId))
+                links=[]
+                # search for all matching assets
+                assets = yield _get_repos_for_source_id(assetIdType, assetId)
+
+                # get provider details for each and build a link
+                for asset in assets:
+                    repo = yield _get_repository(asset["repository_id"])
+                    provider_name = repo["data"]["organisation"]["name"]
+                    hub_key = generate_hub_key(options.default_resolver_id, options.hub_id, asset["repository_id"], 'asset', asset["entity_id"])
+
+                    link = {
+                        'name': provider_name,
+                        'href': hub_key
+                    }
+
+                    links.append(link)
+
+                self.render('multiple_providers_template.html', links=links)
                 raise Return()
 
         # look for just providerId specified
